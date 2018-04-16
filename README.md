@@ -272,4 +272,4 @@ To run all tests, then use:
 go test ./... -tags=acceptance
 ```
 
-N.B you must first build the flyte api image locally as `flyteapi:1`
+N.B you must first build the [flyte](https://github.com/HotelsDotCom/flyte) image locally as `flyteapi:1`
