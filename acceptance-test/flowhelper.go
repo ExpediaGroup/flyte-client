@@ -20,10 +20,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/HotelsDotCom/flyte-client/client"
 	"net/http"
 	"net/url"
 	"path"
-	"github.com/HotelsDotCom/flyte-client/client"
 	"testing"
 	"time"
 )

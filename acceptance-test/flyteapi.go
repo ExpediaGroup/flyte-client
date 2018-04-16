@@ -18,11 +18,11 @@ package tests
 
 import (
 	"fmt"
-	"os"
 	"github.com/HotelsDotCom/go-docker-client"
-	"net"
-	"strconv"
 	"github.com/HotelsDotCom/go-logger"
+	"net"
+	"os"
+	"strconv"
 )
 
 var flyteApiUrl string

@@ -20,10 +20,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"net/url"
 	"github.com/HotelsDotCom/flyte-client/client"
 	"github.com/HotelsDotCom/go-logger"
+	"github.com/stretchr/testify/assert"
+	"net/url"
 	"sync"
 	"testing"
 	"time"
@@ -323,7 +323,6 @@ func Test_PanickingCommandHandlerSendsFatalEvent(t *testing.T) {
 			completeChannel <- true
 			return nil
 		},
-
 	}
 
 	p := NewPack(PackDef{Name: "BambooPack4", EventDefs: []EventDef{buildSucessEventDef}, Commands: []Command{command}}, client)

@@ -17,9 +17,9 @@ limitations under the License.
 package config
 
 import (
+	"github.com/HotelsDotCom/go-logger"
 	"net/url"
 	"os"
-	"github.com/HotelsDotCom/go-logger"
 	"strconv"
 	"strings"
 	"time"

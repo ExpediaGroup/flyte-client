@@ -22,12 +22,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/HotelsDotCom/go-logger"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
 	"time"
-	"github.com/HotelsDotCom/go-logger"
 )
 
 type Client interface {
@@ -40,7 +40,7 @@ type Client interface {
 	// CompleteAction posts the action result to the flyte server.
 	CompleteAction(Action, Event) error
 	// GetFlyteHealthCheckURL gets the flyte api healthcheck url
-	GetFlyteHealthCheckURL()(*url.URL, error)
+	GetFlyteHealthCheckURL() (*url.URL, error)
 }
 
 type client struct {
@@ -48,7 +48,7 @@ type client struct {
 	packURL       *url.URL
 	baseURL       *url.URL
 	takeActionURL *url.URL
-	apiLinks 	  map[string][]Link
+	apiLinks      map[string][]Link
 	httpClient    *http.Client
 }
 
@@ -64,7 +64,7 @@ func NewClient(rootURL *url.URL, timeout time.Duration) Client {
 	baseUrl := getBaseURL(*rootURL)
 	client := &client{
 		baseURL: baseUrl,
-		httpClient: &http.Client {
+		httpClient: &http.Client{
 			Timeout: timeout,
 		},
 	}

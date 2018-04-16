@@ -20,18 +20,18 @@ package tests
 
 import (
 	"encoding/json"
-	"net/url"
 	"github.com/HotelsDotCom/flyte-client/client"
 	"github.com/HotelsDotCom/flyte-client/config"
 	"github.com/HotelsDotCom/flyte-client/flyte"
 	"github.com/HotelsDotCom/flyte-client/healthcheck"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"sync"
 	"testing"
 	"time"
-	"net/http"
-	"io/ioutil"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/assert"
 )
 
 var PackFeatures = []Test{

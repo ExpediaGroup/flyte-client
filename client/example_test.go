@@ -17,15 +17,15 @@ limitations under the License.
 package client_test
 
 import (
-	"net/url"
-	"time"
 	"github.com/HotelsDotCom/flyte-client/client"
 	"github.com/HotelsDotCom/flyte-client/flyte"
+	"net/url"
+	"time"
 )
 
 func ExampleNewClient() {
 	rootUrl, _ := url.Parse("http://example.com/")
-	timeout := 10*time.Second
+	timeout := 10 * time.Second
 
 	client := client.NewClient(rootUrl, timeout)
 

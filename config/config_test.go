@@ -17,10 +17,10 @@ limitations under the License.
 package config
 
 import (
+	"github.com/HotelsDotCom/go-logger/loggertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/url"
-	"github.com/HotelsDotCom/go-logger/loggertest"
 	"testing"
 	"time"
 )

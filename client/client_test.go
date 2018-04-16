@@ -17,16 +17,16 @@ limitations under the License.
 package client
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/HotelsDotCom/go-logger"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
-	"bytes"
-	"github.com/stretchr/testify/require"
-	"github.com/HotelsDotCom/go-logger"
 )
 
 func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
@@ -52,7 +52,7 @@ func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 	baseUrl, _ := url.Parse(server.URL)
 
 	// when
-	client := NewClient(baseUrl, 10 * time.Second)
+	client := NewClient(baseUrl, 10*time.Second)
 
 	// then a log error message will have been recorded...
 	assert.Contains(t, logMsg, "cannot get api links:")
@@ -70,7 +70,7 @@ func Test_GetFlyteHealthCheckURL_ShouldSelectFlyteHealthCheckUrlFromFlyteApiLink
 	defer server.Close()
 
 	baseUrl, _ := url.Parse(server.URL)
-	client := NewClient(baseUrl, 10 * time.Second)
+	client := NewClient(baseUrl, 10*time.Second)
 
 	// when
 	healthCheckURL, err := client.GetFlyteHealthCheckURL()
@@ -89,7 +89,7 @@ func Test_GetFlyteHealthCheckURL_ShouldReturnErrorWhenItCannotGetHealthCheckURLF
 	defer server.Close()
 
 	baseUrl, _ := url.Parse(server.URL)
-	client := NewClient(baseUrl, 10 * time.Second)
+	client := NewClient(baseUrl, 10*time.Second)
 
 	// when
 	_, err := client.GetFlyteHealthCheckURL()

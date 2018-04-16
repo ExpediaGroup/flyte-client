@@ -30,7 +30,6 @@ func StartMongo() (*Mongo, error) {
 		return nil, err
 	}
 
-
 	mongoContainer, err := d.Run("mongo", "mongo", nil, []string{"27017"})
 	if err != nil {
 		return nil, err

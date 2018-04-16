@@ -17,11 +17,11 @@ limitations under the License.
 package healthcheck
 
 import (
-	"testing"
-	"net/http"
-	"github.com/stretchr/testify/assert"
-	"net/http/httptest"
 	"github.com/HotelsDotCom/go-logger/loggertest"
+	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 func TestHealthCheck_shouldReturn200AndValidJsonResponse_whenAllHealthChecksAreSuccessful(t *testing.T) {
@@ -89,7 +89,7 @@ func TestHealthCheck_shouldReturn500AndValidJsonResponse_whenAHealthCheckFails(t
 func TestHealthCheck_shouldReturn500HeaderResponse_whenJsonMarshallingError(t *testing.T) {
 	// given these healthchecks - that will return invalid JSON
 	endPointCheck := func() (name string, health Health) {
-		return "EndPointCheck", Health{Healthy: true, Status: func(){}}
+		return "EndPointCheck", Health{Healthy: true, Status: func() {}}
 	}
 	healthChecks := []HealthCheck{endPointCheck}
 
@@ -107,7 +107,7 @@ func TestHealthCheck_shouldReturn500HeaderResponse_whenJsonMarshallingError(t *t
 func TestHealthCheck_shouldLogMessage_whenJsonMarshallingError(t *testing.T) {
 	// given these healthchecks - that will return invalid JSON
 	endPointCheck := func() (name string, health Health) {
-		return "EndPointCheck", Health{Healthy: true, Status: func(){}}
+		return "EndPointCheck", Health{Healthy: true, Status: func() {}}
 	}
 	healthChecks := []HealthCheck{endPointCheck}
 

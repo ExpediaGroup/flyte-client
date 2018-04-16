@@ -1,13 +1,13 @@
 package healthcheck
 
 import (
-	"testing"
-	"net/http"
-	"github.com/stretchr/testify/assert"
 	"errors"
-	"net/url"
 	"github.com/HotelsDotCom/flyte-client/client"
+	"github.com/stretchr/testify/assert"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"testing"
 	"time"
 )
 
@@ -30,7 +30,7 @@ func Test_FlyteApiHealthCheck_ShouldReturnHealthyResponse(t *testing.T) {
 
 	// then
 	assert.Equal(t, true, health.Healthy)
-	assert.Equal(t, "flyte-api is up and responding to requests. url: '" + flyteApiHealthCheckURL + "'", health.Status)
+	assert.Equal(t, "flyte-api is up and responding to requests. url: '"+flyteApiHealthCheckURL+"'", health.Status)
 }
 
 func Test_FlyteApiHealthCheck_ShouldReturnErrorMessage_WhenErrorGettingHealthCheckURLFromFlyteApi(t *testing.T) {
@@ -67,7 +67,7 @@ func Test_FlyteApiHealthCheck_ShouldReturnErrorMessage_WhenHttpRequestToFlyteApi
 	// then
 	assert.Equal(t, true, health.Healthy)
 	assert.Contains(t, health.Status, "error in http call to flyte-api:")
-	assert.Contains(t, health.Status, "url: '" + flyteApiHealthCheckURL + "'")
+	assert.Contains(t, health.Status, "url: '"+flyteApiHealthCheckURL+"'")
 }
 
 func Test_FlyteApiHealthCheck_ShouldReturnErrorMessage_WhenHttpStatusReturnedFromFlyteApiHealthCheckIsNot200(t *testing.T) {
@@ -89,7 +89,7 @@ func Test_FlyteApiHealthCheck_ShouldReturnErrorMessage_WhenHttpStatusReturnedFro
 
 	// then
 	assert.Equal(t, true, health.Healthy)
-	assert.Equal(t, "flyte-api is not responding as expected. http status: '500 Internal Server Error'. url: '" + flyteApiHealthCheckURL + "'", health.Status)
+	assert.Equal(t, "flyte-api is not responding as expected. http status: '500 Internal Server Error'. url: '"+flyteApiHealthCheckURL+"'", health.Status)
 }
 
 func createURL(u string) *url.URL {
@@ -100,10 +100,10 @@ func createURL(u string) *url.URL {
 // client.Client
 type MockClient struct {
 	healthCheckURL *url.URL
-	err      	   error
+	err            error
 }
 
-func (c MockClient) GetFlyteHealthCheckURL()(*url.URL, error) {
+func (c MockClient) GetFlyteHealthCheckURL() (*url.URL, error) {
 	return c.healthCheckURL, c.err
 }
 

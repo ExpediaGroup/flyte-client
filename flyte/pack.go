@@ -20,11 +20,11 @@ package flyte
 
 import (
 	"encoding/json"
-	"net/url"
 	"github.com/HotelsDotCom/flyte-client/client"
-	"github.com/HotelsDotCom/go-logger"
-	"time"
 	"github.com/HotelsDotCom/flyte-client/healthcheck"
+	"github.com/HotelsDotCom/go-logger"
+	"net/url"
+	"time"
 )
 
 const (
@@ -45,7 +45,7 @@ type pack struct {
 	PackDef
 	client           client.Client
 	pollingFrequency time.Duration
-	healthChecks 	 []healthcheck.HealthCheck
+	healthChecks     []healthcheck.HealthCheck
 }
 
 // Creates a Pack struct with the details from the pack definition and a connection to the flyte api through the client.
@@ -59,14 +59,14 @@ func NewPack(packDef PackDef, client client.Client, healthChecks ...healthcheck.
 		// (bearing in mind that this polling rate only comes into play if no actions are immediately available
 		// - if actions are available then the pack/client will consume them as quickly as it can)
 		pollingFrequency: 5 * time.Second,
-		healthChecks: addDefaultHealthCheckIfNoneExist(healthChecks),
+		healthChecks:     addDefaultHealthCheckIfNoneExist(healthChecks),
 	}
 }
 
 func addDefaultHealthCheckIfNoneExist(healthChecks []healthcheck.HealthCheck) []healthcheck.HealthCheck {
 	if len(healthChecks) == 0 {
 		healthChecks = append(healthChecks, func() (name string, health healthcheck.Health) {
-			return "DefaultCheck", healthcheck.Health{Healthy:true, Status: "Pack is running."}
+			return "DefaultCheck", healthcheck.Health{Healthy: true, Status: "Pack is running."}
 		})
 	}
 	return healthChecks
@@ -86,7 +86,6 @@ func (p pack) Start() {
 	p.startHealthCheckServer()
 }
 
-
 // Spontaneously sends an event that the pack has observed to the flyte server.
 func (p pack) SendEvent(event Event) error {
 	return p.client.PostEvent(client.Event{
@@ -105,11 +104,11 @@ func (p pack) startHealthCheckServer() {
 
 // The main configuration struct for defining a pack.
 type PackDef struct {
-	Name      		 string // the pack name
-	Labels    		 map[string]string // the pack labels. These act as a filter that determines when the pack will execute against a flow
-	EventDefs 		 []EventDef // the event definitions of a pack. These can be events a pack observes and sends spontaneously
-	Commands  		 []Command // the commands a pack exposes
-	HelpURL   		 *url.URL // a help url to a page that describes what the pack does and how it is used
+	Name      string            // the pack name
+	Labels    map[string]string // the pack labels. These act as a filter that determines when the pack will execute against a flow
+	EventDefs []EventDef        // the event definitions of a pack. These can be events a pack observes and sends spontaneously
+	Commands  []Command         // the commands a pack exposes
+	HelpURL   *url.URL          // a help url to a page that describes what the pack does and how it is used
 }
 
 // Defines an event. The help URL is optional.
@@ -120,10 +119,10 @@ type EventDef struct {
 
 // Defines a command - its name, the events it can output and a handler for incoming actions. The help URL is optional.
 type Command struct {
-	Name         string // the name of the command
-	OutputEvents []EventDef // the events a pack can output
+	Name         string         // the name of the command
+	OutputEvents []EventDef     // the events a pack can output
 	Handler      CommandHandler // the handler is where the functionality of a pack is implemented when a command is called
-	HelpURL      *url.URL // optional
+	HelpURL      *url.URL       // optional
 }
 
 // Command handlers will be invoked with the input JSON when they are invoked from a flow step in the flyte server.

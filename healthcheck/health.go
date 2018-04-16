@@ -19,8 +19,8 @@ package healthcheck
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"github.com/HotelsDotCom/go-logger"
+	"net/http"
 	"time"
 )
 

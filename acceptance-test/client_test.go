@@ -19,9 +19,9 @@ limitations under the License.
 package tests
 
 import (
-	"net/url"
 	"github.com/HotelsDotCom/flyte-client/client"
 	"github.com/HotelsDotCom/flyte-client/config"
+	"net/url"
 	"testing"
 	"time"
 )

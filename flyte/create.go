@@ -17,8 +17,8 @@ limitations under the License.
 package flyte
 
 import (
-	"net/url"
 	"github.com/HotelsDotCom/flyte-client/client"
+	"net/url"
 )
 
 // this registers the pack with the flyte server

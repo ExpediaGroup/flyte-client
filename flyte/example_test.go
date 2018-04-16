@@ -18,11 +18,11 @@ package flyte_test
 
 import (
 	"encoding/json"
-	"net/url"
+	"fmt"
 	"github.com/HotelsDotCom/flyte-client/client"
 	"github.com/HotelsDotCom/flyte-client/flyte"
+	"net/url"
 	"time"
-	"fmt"
 )
 
 func ExampleNewPack() {
@@ -174,8 +174,8 @@ func ExampleCommandHandler() {
 
 	// this payload struct will used in the returned flyte.Event below
 	type IssueCreatedPayload struct {
-		Project  string   `json:"project"`
-		IssueId  string   `json:"issueId"`
+		Project string `json:"project"`
+		IssueId string `json:"issueId"`
 	}
 
 	// the handler once created, can now be used in a flyte.Command struct
@@ -192,8 +192,8 @@ func ExampleCommandHandler() {
 		return flyte.Event{
 			EventDef: issueCreatedEventDef,
 			Payload: IssueCreatedPayload{
-				Project:  "FOO",
-				IssueId:  "123",
+				Project: "FOO",
+				IssueId: "123",
 			},
 		}
 	}
@@ -205,23 +205,23 @@ func ExampleEvent() {
 	// to help document your event to your end users, you can provide an optional help URL
 	helpUrl, _ := url.Parse("http://jirapack/help#create-issue-command")
 	issueCreatedEventDef := flyte.EventDef{
-		Name: "IssueCreated",
+		Name:    "IssueCreated",
 		HelpURL: helpUrl, // optional
 	}
 
 	// you will also need to provide a payload containing the relevant data for the event.
 	// the payload will be marshalled into JSON, so should be annotated appropriately
 	type IssueCreatedPayload struct {
-		Project  string   `json:"project"`
-		IssueId  string   `json:"issueId"`
+		Project string `json:"project"`
+		IssueId string `json:"issueId"`
 	}
 
 	// then simply pass in the event definition and a populated payload struct to create the event
 	event := flyte.Event{
 		EventDef: issueCreatedEventDef,
 		Payload: IssueCreatedPayload{
-			Project:  "FOO",
-			IssueId:  "123",
+			Project: "FOO",
+			IssueId: "123",
 		},
 	}
 	fmt.Printf("%+v", event)
@@ -233,7 +233,7 @@ func ExampleEventDef() {
 
 	// once created, the event definition is ready to be passed into a flyte.Event struct
 	issueCreatedEventDef := flyte.EventDef{
-		Name: 	"IssueCreated",
+		Name:    "IssueCreated",
 		HelpURL: helpUrl,
 	}
 	fmt.Printf("%+v", issueCreatedEventDef)
@@ -265,8 +265,8 @@ func ExamplePackDef() {
 		return flyte.Event{
 			EventDef: issueCreatedEventDef,
 			Payload: IssueCreatedPayload{
-				Project:  "FOO",
-				IssueId:  "123",
+				Project: "FOO",
+				IssueId: "123",
 			},
 		}
 	}
@@ -292,8 +292,8 @@ func ExamplePackDef() {
 
 	// now we are ready to create the PackDef struct which pulls together the above structs to give the full definition of the pack.
 	packDef := flyte.PackDef{
-		Name:     "JiraPack",
-		Labels:   labels,
+		Name:   "JiraPack",
+		Labels: labels,
 		EventDefs: []flyte.EventDef{
 			issueCreatedEventDef,
 			issueCreationErrorEventDef,

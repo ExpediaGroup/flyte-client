@@ -23,23 +23,23 @@ import (
 
 // the client Pack struct is used when registering with the flyte api.
 type Pack struct {
-	Name      string            `json:"name"` // pack name
-	Labels    map[string]string `json:"labels,omitempty"` // pack labels - these act as a filter that determines when the pack will execute against a flow
-	EventDefs []EventDef        `json:"events"` // the event definitions of a pack. These can be events a pack observes and sends spontaneously
+	Name      string            `json:"name"`               // pack name
+	Labels    map[string]string `json:"labels,omitempty"`   // pack labels - these act as a filter that determines when the pack will execute against a flow
+	EventDefs []EventDef        `json:"events"`             // the event definitions of a pack. These can be events a pack observes and sends spontaneously
 	Commands  []Command         `json:"commands,omitempty"` // the commands a pack exposes
-	Links     []Link            `json:"links, omitempty"` // contains links the pack uses, such as the take action url and the events url, or links the pack exposes such as the pack help url
+	Links     []Link            `json:"links, omitempty"`   // contains links the pack uses, such as the take action url and the events url, or links the pack exposes such as the pack help url
 }
 
 // the event definition, this describes events a pack can send
 type EventDef struct {
-	Name  string `json:"name"` // the event name
+	Name  string `json:"name"`            // the event name
 	Links []Link `json:"links,omitempty"` // the event link/s, optional. Could be a help link or anything related to the event
 }
 
 // the command struct represents the commands a pack exposes
 type Command struct {
-	Name       string   `json:"name"` // command name
-	EventNames []string `json:"events"` // the command output events
+	Name       string   `json:"name"`            // command name
+	EventNames []string `json:"events"`          // the command output events
 	Links      []Link   `json:"links,omitempty"` // the command link/s, optional. Normally a help url
 }
 

@@ -18,12 +18,12 @@ package flyte
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"github.com/HotelsDotCom/flyte-client/client"
 	"github.com/HotelsDotCom/go-logger"
+	"github.com/stretchr/testify/assert"
+	"net/url"
 	"testing"
 	"time"
-	"net/url"
 )
 
 type mockClient struct {
