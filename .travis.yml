@@ -17,4 +17,4 @@ install: true
 
 script:
   - dep ensure
-  - go test ./... -tags=acceptance -v
+  - go test ./... -tags=acceptance
