@@ -47,7 +47,7 @@ func StartFlyte(mongo Mongo) (*Flyte, error) {
 
 	os.Setenv("FLYTE_API", flyteApiUrl)
 
-	flyteContainer, err := d.Run("flyteapi", "flyteapi:1",
+	flyteContainer, err := d.Run("flyte", "hotelsdotcom/flyte:1.22",
 		[]string{fmt.Sprintf("FLYTE_MGO_HOST=%s", mongoHost), fmt.Sprintf("FLYTE_PORT=%s", flyteApiPort)},
 		[]string{flyteApiPort + ":" + flyteApiPort})
 	if err != nil {
