@@ -1,6 +1,6 @@
 # flyte-client
 
-![Build Status](https://travis-ci.org/HotelsDotCom/flyte-bamboo.svg?branch=master)
+![Build Status](https://travis-ci.org/HotelsDotCom/flyte-client.svg?branch=master)
 
 flyte-client is a Go library designed to make the writing of flyte packs simple. 
 The client handles the registration of a pack with the flyte server, consuming and handling command actions, and gives the ability to send
