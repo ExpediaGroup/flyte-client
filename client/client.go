@@ -45,11 +45,12 @@ type Client interface {
 
 type client struct {
 	eventsURL     *url.URL
-	packURL       *url.URL
+	packsURL      *url.URL
 	baseURL       *url.URL
 	takeActionURL *url.URL
-	apiLinks      map[string][]Link
-	httpClient    *http.Client
+	apiHealthURL  *url.URL
+	//apiLinks      map[string][]Link
+	httpClient *http.Client
 }
 
 const (
@@ -78,37 +79,45 @@ func getBaseURL(u url.URL) *url.URL {
 	return &u
 }
 
-// getApiLinks retrieves links from the flyte api server that are useful to the client such as packs url, health url and so on
+// getApiLinks retrieves links from the flyte api server that are useful to the client such as packs url and health url
 func (c *client) getApiLinks() {
 	var links map[string][]Link
+	var err error
 	if err := c.getStruct(c.baseURL, &links); err != nil {
 		logger.Errorf("cannot get api links: '%v'", err)
 		time.Sleep(flyteApiRetryWait)
 		c.getApiLinks()
 		return
 	}
-	c.apiLinks = links
+
+	c.packsURL, err = findURLByRel(links["links"], "pack/listPacks")
+	if err != nil {
+		logger.Errorf("cannot get set packsURL: '%v'", err)
+	}
+
+	c.apiHealthURL, err = findURLByRel(links["links"], "info/health")
+	if err != nil {
+		logger.Errorf("cannot get set apiHealthURL: '%v'", err)
+	}
 }
 
 // CreatePack is responsible for posting your pack to the flyte server, making it available to be used by the flows.
 func (c *client) CreatePack(pack Pack) error {
-	packsURL, err := c.getPacksURL()
-	if err != nil {
+
+	var err error
+	if err = c.registerPack(&pack); err != nil {
 		return err
 	}
 
-	resp, err := c.post(packsURL, pack)
-
-	if err != nil {
-		return fmt.Errorf("error posting pack %+v to %s: %v", pack, packsURL.String(), err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("pack not created, response was: %+v", resp)
+	if c.eventsURL, err = findURLByRel(pack.Links, "event"); err != nil {
+		return err
 	}
 
-	return c.generateURLs(resp)
+	if c.takeActionURL, err = findURLByRel(pack.Links, "takeAction"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // getPacksURL finds out where packs should be posted to
@@ -121,26 +130,28 @@ func (c *client) GetFlyteHealthCheckURL() (*url.URL, error) {
 	return findURLByRel(c.apiLinks["links"], "info/health")
 }
 
-// generateURLs retrieves the packUrl from the http response, gets information about the pack and
-// then generates the eventsURL and takeActionURL from this
-func (c *client) generateURLs(resp *http.Response) error {
-	packURL, err := resp.Location()
-	if err != nil {
-		return fmt.Errorf("location header not found on 'create pack' response: %v", err)
-	}
-	c.packURL = packURL
-	var p Pack
-	if err = c.getStruct(packURL, &p); err != nil {
-		return err
-	}
-	c.eventsURL, err = findURLByRel(p.Links, "event")
+// registerPack posts the pack, and populates the pack with appropriate URLs
+func (c *client) registerPack(pack *Pack) error {
+	packsURL, err := c.getPacksURL()
 	if err != nil {
 		return err
 	}
-	c.takeActionURL, err = findURLByRel(p.Links, "takeAction")
+
+	resp, err := c.post(packsURL, pack)
 	if err != nil {
-		return err
+		return fmt.Errorf("error posting pack %+v to %s: %v", pack, packsURL.String(), err)
 	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("pack not created, response was: %+v", resp)
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(pack)
+	if err != nil {
+		return fmt.Errorf("could not deserialise response: %s", err)
+	}
+
 	return nil
 }
 

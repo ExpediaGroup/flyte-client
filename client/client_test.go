@@ -63,13 +63,10 @@ func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 
 func Test_GetFlyteHealthCheckURL_ShouldSelectFlyteHealthCheckUrlFromFlyteApiLinks(t *testing.T) {
 	// given
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		w.Write(bytes.NewBufferString(flyteApiLinksResponse).Bytes())
-	}
-	server := httptest.NewServer(http.HandlerFunc(handler))
-	defer server.Close()
+	ts := mockServer(http.StatusOK, string(bytes.NewBufferString(flyteApiLinksResponse).Bytes()))
+	defer ts.Close()
 
-	baseUrl, _ := url.Parse(server.URL)
+	baseUrl, _ := url.Parse(ts.URL)
 	client := NewClient(baseUrl, 10*time.Second)
 
 	// when
@@ -82,13 +79,10 @@ func Test_GetFlyteHealthCheckURL_ShouldSelectFlyteHealthCheckUrlFromFlyteApiLink
 
 func Test_GetFlyteHealthCheckURL_ShouldReturnErrorWhenItCannotGetHealthCheckURLFromFlyteApiLinks(t *testing.T) {
 	// given
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		w.Write(bytes.NewBufferString(flyteApiNoLinksResponse).Bytes())
-	}
-	server := httptest.NewServer(http.HandlerFunc(handler))
-	defer server.Close()
+	ts := mockServer(http.StatusOK, string(bytes.NewBufferString(flyteApiNoLinksResponse).Bytes()))
+	defer ts.Close()
 
-	baseUrl, _ := url.Parse(server.URL)
+	baseUrl, _ := url.Parse(ts.URL)
 	client := NewClient(baseUrl, 10*time.Second)
 
 	// when
@@ -99,22 +93,59 @@ func Test_GetFlyteHealthCheckURL_ShouldReturnErrorWhenItCannotGetHealthCheckURLF
 }
 
 func Test_TakeAction_ShouldReturnSpecificErrorTypeAndMessageWhenResourceIsNotFound(t *testing.T) {
-	handler := func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNotFound) }
-	server := httptest.NewServer(http.HandlerFunc(handler))
-	defer server.Close()
+	ts := mockServer(http.StatusNotFound, "")
+	defer ts.Close()
 
-	u, _ := url.Parse(server.URL + "/take/action/url")
+	c := newTestClient(ts.URL, t)
+	u, err := url.Parse(ts.URL + "/take/action/url")
+	require.NoError(t, err)
 
-	c := &client{takeActionURL: u, httpClient: &http.Client{
-		Timeout: 5 * time.Second,
-	}}
+	c.takeActionURL = u
+	_, err = c.TakeAction()
 
-	_, e := c.TakeAction()
+	require.IsType(t, NotFoundError{}, err)
+	assert.EqualError(t, err, fmt.Sprintf("Resource not found at %s/take/action/url", ts.URL))
+}
 
-	if assert.Error(t, e) {
-		assert.IsType(t, NotFoundError{}, e)
-		assert.Equal(t, fmt.Sprintf("Resource not found at %s/take/action/url", server.URL), e.Error())
-	}
+//should register pack with API, and have populated links
+func TestClient_CreatePack(t *testing.T) {
+
+	ts, rec := mockServerWithRecorder(http.StatusCreated, slackPackResponse)
+	defer ts.Close()
+
+	c := newTestClient(ts.URL, t)
+
+	err := c.CreatePack(Pack{Name: "Slack"})
+	require.NoError(t, err)
+
+	assert.NotNil(t, c.takeActionURL)
+	assert.Equal(t, "http://example.com/v1/packs/Slack/actions/take", c.takeActionURL.String())
+	assert.Len(t, rec.reqs, 1)
+
+	assert.NotNil(t, c.eventsURL)
+	assert.Equal(t, "http://example.com/v1/packs/Slack/events", c.eventsURL.String())
+	assert.Len(t, rec.reqs, 1)
+
+}
+
+func TestCreatePackShouldReturnErrorIfTakeActionsLinksAreNotSet(t *testing.T) {
+	ts := mockServer(http.StatusCreated, slackPackResponseWithNoTakeAction)
+	defer ts.Close()
+
+	c := newTestClient(ts.URL, t)
+
+	err := c.CreatePack(Pack{Name: "Slack"})
+	assert.Equal(t, "could not find link with rel \"takeAction\" in [{http://example.com/v1/packs/Slack/events http://example.com/swagger#/event}]", err.Error())
+}
+
+func TestCreatePackShouldReturnErrorIfEventLinksAreNotSet(t *testing.T) {
+	ts := mockServer(http.StatusCreated, slackPackResponseWithNoEvents)
+	defer ts.Close()
+
+	c := newTestClient(ts.URL, t)
+
+	err := c.CreatePack(Pack{Name: "Slack"})
+	assert.Equal(t, "could not find link with rel \"event\" in [{http://example.com/v1/packs/Slack/actions/take http://example.com/swagger#!/action/takeAction}]", err.Error())
 }
 
 var flyteApiLinksResponse = `{
@@ -165,3 +196,82 @@ var flyteApiNoLinksResponse = `{
 var flyteApiErrorResponse = `{
 	"error!" 
 }`
+
+var slackPackResponse = `
+{
+    "id": "Slack",
+    "name": "Slack",
+    "links": [
+        {
+            "href": "http://example.com/v1/packs/Slack/actions/take",
+            "rel": "http://example.com/swagger#!/action/takeAction"
+        },
+        {
+            "href": "http://example.com/v1/packs/Slack/events",
+            "rel": "http://example.com/swagger#/event"
+        }
+    ]
+}
+`
+
+var slackPackResponseWithNoTakeAction = `
+{
+    "id": "Slack",
+    "name": "Slack",
+    "links": [
+        {
+            "href": "http://example.com/v1/packs/Slack/events",
+            "rel": "http://example.com/swagger#/event"
+        }
+    ]
+}
+`
+
+var slackPackResponseWithNoEvents = `
+{
+    "id": "Slack",
+    "name": "Slack",
+    "links": [
+        {
+            "href": "http://example.com/v1/packs/Slack/actions/take",
+            "rel": "http://example.com/swagger#!/action/takeAction"
+        }
+    ]
+}
+`
+
+func mockServer(status int, body string) *httptest.Server {
+	ts, _ := mockServerWithRecorder(status, body)
+	return ts
+}
+
+func mockServerWithRecorder(status int, body string) (*httptest.Server, *requestsRec) {
+	rec := &requestsRec{
+		reqs: []*http.Request{},
+	}
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		rec.add(r)
+
+		w.WriteHeader(status)
+		w.Write([]byte(body))
+	}
+	return httptest.NewServer(http.HandlerFunc(handler)), rec
+}
+
+func newTestClient(serverURL string, t *testing.T) *client {
+	u, err := url.Parse(serverURL)
+	require.NoError(t, err)
+
+	return &client{
+		httpClient: &http.Client{Timeout: 5 * time.Second},
+		apiLinks:   map[string][]Link{"links": {{Href: u, Rel: "pack/listPacks"}}},
+	}
+}
+
+type requestsRec struct {
+	reqs []*http.Request
+}
+
+func (rr *requestsRec) add(r *http.Request) {
+	rr.reqs = append(rr.reqs, r)
+}

@@ -91,7 +91,7 @@ func createLink(u *url.URL, rel string) client.Link {
 	}
 }
 
-// converts a map pf client.EventDef's to a slice of client.EventDef's
+// converts a map of client.EventDef's to a slice of client.EventDef's
 func toSlice(m map[string]client.EventDef) []client.EventDef {
 	var s []client.EventDef
 	for _, eventDef := range m {

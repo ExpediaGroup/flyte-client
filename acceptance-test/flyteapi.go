@@ -27,6 +27,11 @@ import (
 
 var flyteApiUrl string
 
+const (
+	flyteApiDefaultImage = "hotelsdotcom/flyte:1.22"
+	flyteApiImageEnvName = "FLYTE_API_IMAGE"
+)
+
 type Flyte struct {
 	flyteContainer docker.Container
 }
@@ -47,7 +52,7 @@ func StartFlyte(mongo Mongo) (*Flyte, error) {
 
 	os.Setenv("FLYTE_API", flyteApiUrl)
 
-	flyteContainer, err := d.Run("flyte", "hotelsdotcom/flyte:1.22",
+	flyteContainer, err := d.Run("flyte", getFlyteImagePath(),
 		[]string{fmt.Sprintf("FLYTE_MGO_HOST=%s", mongoHost), fmt.Sprintf("FLYTE_PORT=%s", flyteApiPort)},
 		[]string{flyteApiPort + ":" + flyteApiPort})
 	if err != nil {
@@ -74,4 +79,17 @@ func getPort() string {
 
 func (f *Flyte) Stop() error {
 	return f.flyteContainer.StopAndRemove()
+}
+
+func getFlyteImagePath() string {
+
+	flyteImage := os.Getenv(flyteApiImageEnvName)
+
+	if flyteImage == "" {
+		logger.Infof("%v environment variable is not set, setting to default of %v", flyteApiImageEnvName, flyteApiDefaultImage)
+		return flyteApiDefaultImage
+	}
+
+	logger.Infof("Using %v as value for %v", flyteImage, flyteApiImageEnvName)
+	return flyteImage
 }

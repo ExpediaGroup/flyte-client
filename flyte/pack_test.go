@@ -282,7 +282,7 @@ func Test_PackWithNoCommands_ShouldNotGetActionsFromFlyteServer(t *testing.T) {
 			return nil
 		},
 		takeAction: func() (*client.Action, error) {
-			assert.Fail(t, "takeAction called unexepectedely")
+			assert.Fail(t, "takeAction called unexpectedly")
 			return nil, nil
 		},
 	}
@@ -333,7 +333,7 @@ func Test_PanickingCommandHandlerSendsFatalEvent(t *testing.T) {
 	}
 }
 
-func Test_PanickingCommandHandlerDoesnotKillThePack(t *testing.T) {
+func Test_PanickingCommandHandlerDoesNotKillThePack(t *testing.T) {
 	StartHealthCheckServer = false // we need this to stop multiple registrations of the healthcheck server
 
 	actionGenerated := false
