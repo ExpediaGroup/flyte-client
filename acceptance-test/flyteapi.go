@@ -28,7 +28,7 @@ import (
 var flyteApiUrl string
 
 const (
-	flyteApiDefaultImage = "hotelsdotcom/flyte:1.33"
+	flyteApiDefaultImage = "hotelsdotcom/flyte:1.81"
 	flyteApiImageEnvName = "FLYTE_API_IMAGE"
 )
 
