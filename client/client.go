@@ -45,12 +45,10 @@ type Client interface {
 
 type client struct {
 	eventsURL     *url.URL
-	packsURL      *url.URL
 	baseURL       *url.URL
 	takeActionURL *url.URL
-	apiHealthURL  *url.URL
-	//apiLinks      map[string][]Link
-	httpClient *http.Client
+	apiLinks      map[string][]Link
+	httpClient    *http.Client
 }
 
 const (
@@ -82,23 +80,14 @@ func getBaseURL(u url.URL) *url.URL {
 // getApiLinks retrieves links from the flyte api server that are useful to the client such as packs url and health url
 func (c *client) getApiLinks() {
 	var links map[string][]Link
-	var err error
+
 	if err := c.getStruct(c.baseURL, &links); err != nil {
 		logger.Errorf("cannot get api links: '%v'", err)
 		time.Sleep(flyteApiRetryWait)
 		c.getApiLinks()
 		return
 	}
-
-	c.packsURL, err = findURLByRel(links["links"], "pack/listPacks")
-	if err != nil {
-		logger.Errorf("cannot get set packsURL: '%v'", err)
-	}
-
-	c.apiHealthURL, err = findURLByRel(links["links"], "info/health")
-	if err != nil {
-		logger.Errorf("cannot get set apiHealthURL: '%v'", err)
-	}
+	c.apiLinks = links
 }
 
 // CreatePack is responsible for posting your pack to the flyte server, making it available to be used by the flows.
