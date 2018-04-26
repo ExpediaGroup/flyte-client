@@ -107,8 +107,7 @@ func Test_TakeAction_ShouldReturnSpecificErrorTypeAndMessageWhenResourceIsNotFou
 	assert.EqualError(t, err, fmt.Sprintf("Resource not found at %s/take/action/url", ts.URL))
 }
 
-//should register pack with API, and have populated links
-func TestClient_CreatePack(t *testing.T) {
+func Test_CreatePack_ShouldRegisterPackWithApiAndPopulateClientWithLinks(t *testing.T) {
 
 	ts, rec := mockServerWithRecorder(http.StatusCreated, slackPackResponse)
 	defer ts.Close()
@@ -128,7 +127,7 @@ func TestClient_CreatePack(t *testing.T) {
 
 }
 
-func TestCreatePackShouldReturnErrorIfTakeActionsLinksAreNotSet(t *testing.T) {
+func Test_CreatePack_ShouldReturnErrorIfTakeActionsLinksAreNotSet(t *testing.T) {
 	ts := mockServer(http.StatusCreated, slackPackResponseWithNoTakeAction)
 	defer ts.Close()
 
@@ -138,7 +137,7 @@ func TestCreatePackShouldReturnErrorIfTakeActionsLinksAreNotSet(t *testing.T) {
 	assert.Equal(t, "could not find link with rel \"takeAction\" in [{http://example.com/v1/packs/Slack/events http://example.com/swagger#/event}]", err.Error())
 }
 
-func TestCreatePackShouldReturnErrorIfEventLinksAreNotSet(t *testing.T) {
+func Test_CreatePack_ShouldReturnErrorIfEventLinksAreNotSet(t *testing.T) {
 	ts := mockServer(http.StatusCreated, slackPackResponseWithNoEvents)
 	defer ts.Close()
 
@@ -146,6 +145,54 @@ func TestCreatePackShouldReturnErrorIfEventLinksAreNotSet(t *testing.T) {
 
 	err := c.CreatePack(Pack{Name: "Slack"})
 	assert.Equal(t, "could not find link with rel \"event\" in [{http://example.com/v1/packs/Slack/actions/take http://example.com/swagger#!/action/takeAction}]", err.Error())
+}
+
+func Test_RegisterPack_ShouldReturnErrorIfPacksURLCannotBeSet(t *testing.T) {
+	ts := mockServer(http.StatusCreated, slackPackResponse)
+	defer ts.Close()
+
+	u, _ := url.Parse(ts.URL)
+
+	c := &client{
+		httpClient: &http.Client{Timeout: 5 * time.Second},
+		apiLinks:   map[string][]Link{"links": {{Href: u, Rel: "pack/wrong"}}},
+	}
+
+	err := c.CreatePack(Pack{Name: "Slack"})
+	assert.Error(t, err)
+}
+
+func Test_RegisterPack_ShouldReturnErrorIfPostingPackFails(t *testing.T) {
+	ts := mockServer(http.StatusCreated, slackPackResponse)
+	defer ts.Close()
+
+	c := newTestClient(ts.URL, t)
+
+	err := c.CreatePack(Pack{Name: "Slack"})
+	fmt.Println(err)
+	assert.Error(t, err)
+}
+
+func Test_RegisterPack_ShouldReturnErrorIfStatusCodeIsNotStatusCreated(t *testing.T) {
+	ts := mockServer(http.StatusNotFound, slackPackResponseWithNoEvents)
+	defer ts.Close()
+
+	c := newTestClient(ts.URL, t)
+
+	err := c.CreatePack(Pack{Name: "Slack"})
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "pack not created, response was")
+}
+
+func Test_RegisterPack_ShouldReturnErrorIfResponseCannotBeDecoded(t *testing.T) {
+	ts := mockServer(http.StatusCreated, "invalidjson")
+	defer ts.Close()
+
+	c := newTestClient(ts.URL, t)
+
+	err := c.CreatePack(Pack{Name: "Slack"})
+	assert.EqualError(t, err, "could not deserialise response: invalid character 'i' looking for beginning of value")
 }
 
 var flyteApiLinksResponse = `{

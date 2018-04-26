@@ -109,17 +109,7 @@ func (c *client) CreatePack(pack Pack) error {
 	return nil
 }
 
-// getPacksURL finds out where packs should be posted to
-func (c *client) getPacksURL() (*url.URL, error) {
-	return findURLByRel(c.apiLinks["links"], "pack/listPacks")
-}
-
-// GetFlyteHealthCheckURL finds out the flyte healthcheck url
-func (c *client) GetFlyteHealthCheckURL() (*url.URL, error) {
-	return findURLByRel(c.apiLinks["links"], "info/health")
-}
-
-// registerPack posts the pack, and populates the pack with appropriate URLs
+// registerPack posts the pack, and handles the response
 func (c *client) registerPack(pack *Pack) error {
 	packsURL, err := c.getPacksURL()
 	if err != nil {
@@ -142,6 +132,16 @@ func (c *client) registerPack(pack *Pack) error {
 	}
 
 	return nil
+}
+
+// getPacksURL finds out where packs should be posted to
+func (c *client) getPacksURL() (*url.URL, error) {
+	return findURLByRel(c.apiLinks["links"], "pack/listPacks")
+}
+
+// GetFlyteHealthCheckURL finds out the flyte healthcheck url
+func (c *client) GetFlyteHealthCheckURL() (*url.URL, error) {
+	return findURLByRel(c.apiLinks["links"], "info/health")
 }
 
 // PostEvent posts events to the flyte server
