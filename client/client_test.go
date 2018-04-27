@@ -163,14 +163,29 @@ func Test_RegisterPack_ShouldReturnErrorIfPacksURLCannotBeSet(t *testing.T) {
 }
 
 func Test_RegisterPack_ShouldReturnErrorIfPostingPackFails(t *testing.T) {
-	ts := mockServer(http.StatusCreated, slackPackResponse)
+	// given a server with a handler that will timeout when called
+	timeout := 1 * time.Second
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(timeout + 1) // this will force a timeout on the http client call so it returns an error
+	}
+	ts := httptest.NewServer(http.HandlerFunc(handler))
 	defer ts.Close()
 
-	c := newTestClient(ts.URL, t)
+	// and a client setup to call the above server
+	baseUrl, _ := url.Parse(ts.URL)
+	c := &client{
+		baseURL: baseUrl,
+		httpClient: &http.Client{
+			Timeout: timeout,
+		},
+		apiLinks:   map[string][]Link{"links": {{Href: baseUrl, Rel: "pack/listPacks"}}},
+	}
 
+	// when
 	err := c.CreatePack(Pack{Name: "Slack"})
-	fmt.Println(err)
-	assert.Error(t, err)
+
+	// then
+	assert.Contains(t, err.Error(), "error posting pack")
 }
 
 func Test_RegisterPack_ShouldReturnErrorIfStatusCodeIsNotStatusCreated(t *testing.T) {
