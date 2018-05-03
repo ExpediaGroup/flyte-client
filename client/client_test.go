@@ -63,7 +63,7 @@ func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 
 func Test_GetFlyteHealthCheckURL_ShouldSelectFlyteHealthCheckUrlFromFlyteApiLinks(t *testing.T) {
 	// given
-	ts := mockServer(http.StatusOK, string(bytes.NewBufferString(flyteApiLinksResponse).Bytes()))
+	ts := mockServer(http.StatusOK, flyteApiLinksResponse)
 	defer ts.Close()
 
 	baseUrl, _ := url.Parse(ts.URL)
@@ -79,7 +79,7 @@ func Test_GetFlyteHealthCheckURL_ShouldSelectFlyteHealthCheckUrlFromFlyteApiLink
 
 func Test_GetFlyteHealthCheckURL_ShouldReturnErrorWhenItCannotGetHealthCheckURLFromFlyteApiLinks(t *testing.T) {
 	// given
-	ts := mockServer(http.StatusOK, string(bytes.NewBufferString(flyteApiNoLinksResponse).Bytes()))
+	ts := mockServer(http.StatusOK, flyteApiNoLinksResponse)
 	defer ts.Close()
 
 	baseUrl, _ := url.Parse(ts.URL)
@@ -104,7 +104,7 @@ func Test_TakeAction_ShouldReturnSpecificErrorTypeAndMessageWhenResourceIsNotFou
 	_, err = c.TakeAction()
 
 	require.IsType(t, NotFoundError{}, err)
-	assert.EqualError(t, err, fmt.Sprintf("Resource not found at %s/take/action/url", ts.URL))
+	assert.EqualError(t, err, fmt.Sprintf("resource not found at %s/take/action/url", ts.URL))
 }
 
 func Test_CreatePack_ShouldRegisterPackWithApiAndPopulateClientWithLinks(t *testing.T) {
@@ -123,12 +123,10 @@ func Test_CreatePack_ShouldRegisterPackWithApiAndPopulateClientWithLinks(t *test
 
 	assert.NotNil(t, c.eventsURL)
 	assert.Equal(t, "http://example.com/v1/packs/Slack/events", c.eventsURL.String())
-	assert.Len(t, rec.reqs, 1)
-
 }
 
 func Test_CreatePack_ShouldReturnErrorIfTakeActionsLinksAreNotSet(t *testing.T) {
-	ts := mockServer(http.StatusCreated, slackPackResponseWithNoTakeAction)
+	ts := mockServer(http.StatusCreated, slackPackResponseWithNoTakeActionLink)
 	defer ts.Close()
 
 	c := newTestClient(ts.URL, t)
@@ -138,7 +136,7 @@ func Test_CreatePack_ShouldReturnErrorIfTakeActionsLinksAreNotSet(t *testing.T) 
 }
 
 func Test_CreatePack_ShouldReturnErrorIfEventLinksAreNotSet(t *testing.T) {
-	ts := mockServer(http.StatusCreated, slackPackResponseWithNoEvents)
+	ts := mockServer(http.StatusCreated, slackPackResponseWithNoEventsLinks)
 	defer ts.Close()
 
 	c := newTestClient(ts.URL, t)
@@ -147,26 +145,26 @@ func Test_CreatePack_ShouldReturnErrorIfEventLinksAreNotSet(t *testing.T) {
 	assert.Equal(t, "could not find link with rel \"event\" in [{http://example.com/v1/packs/Slack/actions/take http://example.com/swagger#!/action/takeAction}]", err.Error())
 }
 
-func Test_RegisterPack_ShouldReturnErrorIfPacksURLCannotBeSet(t *testing.T) {
+func Test_RegisterPack_ShouldReturnErrorWhenLinksDoNotContainCorrectRel(t *testing.T) {
 	ts := mockServer(http.StatusCreated, slackPackResponse)
 	defer ts.Close()
 
-	u, _ := url.Parse(ts.URL)
+	emptyLinks := map[string][]Link{}
 
 	c := &client{
 		httpClient: &http.Client{Timeout: 5 * time.Second},
-		apiLinks:   map[string][]Link{"links": {{Href: u, Rel: "pack/wrong"}}},
+		apiLinks:   emptyLinks,
 	}
 
 	err := c.CreatePack(Pack{Name: "Slack"})
-	assert.Error(t, err)
+	assert.Contains(t, err.Error(), `could not find link with rel "pack/listPacks"`)
 }
 
 func Test_RegisterPack_ShouldReturnErrorIfPostingPackFails(t *testing.T) {
 	// given a server with a handler that will timeout when called
-	timeout := 1 * time.Second
+	timeout := 10 * time.Millisecond
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(timeout + 1) // this will force a timeout on the http client call so it returns an error
+		time.Sleep(timeout + 1 * time.Millisecond) // this will force a timeout on the http client call so it returns an error
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
 	defer ts.Close()
@@ -186,10 +184,11 @@ func Test_RegisterPack_ShouldReturnErrorIfPostingPackFails(t *testing.T) {
 
 	// then
 	assert.Contains(t, err.Error(), "error posting pack")
+	assert.Contains(t, err.Error(), "Client.Timeout exceeded while awaiting headers")
 }
 
 func Test_RegisterPack_ShouldReturnErrorIfStatusCodeIsNotStatusCreated(t *testing.T) {
-	ts := mockServer(http.StatusNotFound, slackPackResponseWithNoEvents)
+	ts := mockServer(http.StatusNotFound, slackPackResponseWithNoEventsLinks)
 	defer ts.Close()
 
 	c := newTestClient(ts.URL, t)
@@ -276,7 +275,7 @@ var slackPackResponse = `
 }
 `
 
-var slackPackResponseWithNoTakeAction = `
+var slackPackResponseWithNoTakeActionLink = `
 {
     "id": "Slack",
     "name": "Slack",
@@ -289,7 +288,7 @@ var slackPackResponseWithNoTakeAction = `
 }
 `
 
-var slackPackResponseWithNoEvents = `
+var slackPackResponseWithNoEventsLinks = `
 {
     "id": "Slack",
     "name": "Slack",
