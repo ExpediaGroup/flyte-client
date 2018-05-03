@@ -28,8 +28,7 @@ import (
 var flyteApiUrl string
 
 const (
-	flyteApiDefaultImage = "hotelsdotcom/flyte:1.81"
-	flyteApiImageEnvName = "FLYTE_API_IMAGE"
+	defaultFlyteApiImage = "hotelsdotcom/flyte:1.81"
 )
 
 type Flyte struct {
@@ -82,14 +81,10 @@ func (f *Flyte) Stop() error {
 }
 
 func getFlyteImagePath() string {
-
-	flyteImage := os.Getenv(flyteApiImageEnvName)
-
+	flyteImage := os.Getenv("FLYTE_API_IMAGE")
 	if flyteImage == "" {
-		logger.Infof("%v environment variable is not set, setting to default of %v", flyteApiImageEnvName, flyteApiDefaultImage)
-		return flyteApiDefaultImage
+		flyteImage = defaultFlyteApiImage
 	}
-
-	logger.Infof("Using %v as value for %v", flyteImage, flyteApiImageEnvName)
+	logger.Infof("Using API image: %v", flyteImage)
 	return flyteImage
 }

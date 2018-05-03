@@ -77,7 +77,7 @@ func getBaseURL(u url.URL) *url.URL {
 	return &u
 }
 
-// getApiLinks retrieves links from the flyte api server that are useful to the client such as packs url and health url
+// getApiLinks retrieves links from the flyte api server that are useful to the client such as packs url and health url and so on
 func (c *client) getApiLinks() {
 	var links map[string][]Link
 
@@ -181,7 +181,7 @@ func (c client) TakeAction() (*Action, error) {
 	case http.StatusNoContent:
 		return nil, nil
 	case http.StatusNotFound:
-		return nil, NotFoundError{fmt.Sprintf("Resource not found at %s", c.takeActionURL.String())}
+		return nil, NotFoundError{fmt.Sprintf("resource not found at %s", c.takeActionURL.String())}
 	default:
 		return nil, fmt.Errorf("error taking action from %s, response was: %+v", c.takeActionURL.String(), resp)
 	}
