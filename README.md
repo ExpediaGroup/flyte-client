@@ -278,4 +278,4 @@ If you want to provide a custom Flyte-API image to run tests against, set the en
 ```
 export FLYTE_API_IMAGE=flyte:test
 ```
-If this value is not set, it will default to a predefined value found in `acceptance-test/flyte.api.go`, as `flyteApiDefaultImage`.
+If this value is not set, it will default to a predefined value found in `acceptance-test/flyteapi.go`, as `flyteApiDefaultImage`.
