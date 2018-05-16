@@ -27,6 +27,10 @@ import (
 
 var flyteApiUrl string
 
+const (
+	defaultFlyteApiImage = "hotelsdotcom/flyte:1.81"
+)
+
 type Flyte struct {
 	flyteContainer docker.Container
 }
@@ -47,7 +51,7 @@ func StartFlyte(mongo Mongo) (*Flyte, error) {
 
 	os.Setenv("FLYTE_API", flyteApiUrl)
 
-	flyteContainer, err := d.Run("flyte", "hotelsdotcom/flyte:1.22",
+	flyteContainer, err := d.Run("flyte", getFlyteImagePath(),
 		[]string{fmt.Sprintf("FLYTE_MGO_HOST=%s", mongoHost), fmt.Sprintf("FLYTE_PORT=%s", flyteApiPort)},
 		[]string{flyteApiPort + ":" + flyteApiPort})
 	if err != nil {
@@ -74,4 +78,13 @@ func getPort() string {
 
 func (f *Flyte) Stop() error {
 	return f.flyteContainer.StopAndRemove()
+}
+
+func getFlyteImagePath() string {
+	flyteImage := os.Getenv("FLYTE_API_IMAGE")
+	if flyteImage == "" {
+		flyteImage = defaultFlyteApiImage
+	}
+	logger.Infof("Using API image: %v", flyteImage)
+	return flyteImage
 }
