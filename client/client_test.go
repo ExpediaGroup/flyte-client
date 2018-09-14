@@ -61,6 +61,38 @@ func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 	assert.Equal(t, "http://example.com/v1/health", healthCheckURL.String())
 }
 
+func Test_InsecureNewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
+	// given the mock flyte-api will first return an error response getting api links...then after retrying will return the expected response
+	apiLinksFailCount := 1
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		if apiLinksFailCount > 0 {
+			apiLinksFailCount -= apiLinksFailCount
+			w.Write(bytes.NewBufferString(flyteApiErrorResponse).Bytes())
+			return
+		}
+		w.Write(bytes.NewBufferString(flyteApiLinksResponse).Bytes())
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	// and code to record the log message/s
+	logMsg := ""
+	loggerFn := logger.Errorf
+	logger.Errorf = func(msg string, args ...interface{}) { logMsg = fmt.Sprintf(msg, args...) }
+	defer func() { logger.Errorf = loggerFn }()
+
+	baseUrl, _ := url.Parse(server.URL)
+
+	// when
+	client := NewInsecureClient(baseUrl, 10*time.Second)
+
+	// then a log error message will have been recorded...
+	assert.Contains(t, logMsg, "cannot get api links:")
+	// ...but the links are available after the retry
+	healthCheckURL, _ := client.GetFlyteHealthCheckURL()
+	assert.Equal(t, "http://example.com/v1/health", healthCheckURL.String())
+}
+
 func Test_GetFlyteHealthCheckURL_ShouldSelectFlyteHealthCheckUrlFromFlyteApiLinks(t *testing.T) {
 	// given
 	ts := mockServer(http.StatusOK, flyteApiLinksResponse)
@@ -164,7 +196,7 @@ func Test_RegisterPack_ShouldReturnErrorIfPostingPackFails(t *testing.T) {
 	// given a server with a handler that will timeout when called
 	timeout := 10 * time.Millisecond
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(timeout + 1 * time.Millisecond) // this will force a timeout on the http client call so it returns an error
+		time.Sleep(timeout + 1*time.Millisecond) // this will force a timeout on the http client call so it returns an error
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
 	defer ts.Close()
@@ -176,7 +208,7 @@ func Test_RegisterPack_ShouldReturnErrorIfPostingPackFails(t *testing.T) {
 		httpClient: &http.Client{
 			Timeout: timeout,
 		},
-		apiLinks:   map[string][]Link{"links": {{Href: baseUrl, Rel: "pack/listPacks"}}},
+		apiLinks: map[string][]Link{"links": {{Href: baseUrl, Rel: "pack/listPacks"}}},
 	}
 
 	// when
@@ -255,7 +287,7 @@ var flyteApiNoLinksResponse = `{
 }`
 
 var flyteApiErrorResponse = `{
-	"error!" 
+	"error!"
 }`
 
 var slackPackResponse = `
@@ -328,6 +360,7 @@ func newTestClient(serverURL string, t *testing.T) *client {
 		apiLinks:   map[string][]Link{"links": {{Href: u, Rel: "pack/listPacks"}}},
 	}
 }
+
 
 type requestsRec struct {
 	reqs []*http.Request
