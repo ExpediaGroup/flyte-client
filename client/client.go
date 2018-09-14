@@ -19,6 +19,7 @@ limitations under the License.
 package client
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -59,17 +60,31 @@ const (
 // To create a new client, please provide the url of the flyte server and the timeout.
 // timeout specifies a time limit for requests made by this
 // client. A timeout of zero means no timeout.
+// Insecure mode is either true or false
 func NewClient(rootURL *url.URL, timeout time.Duration) Client {
+	return newClient(rootURL, timeout, false)
+}
+
+func NewInsecureClient(rootURL *url.URL, timeout time.Duration) Client {
+	return newClient(rootURL, timeout, true)
+}
+
+func newClient(rootURL *url.URL, timeout time.Duration, isInsecure bool) Client {
 	baseUrl := getBaseURL(*rootURL)
+
 	client := &client{
 		baseURL: baseUrl,
 		httpClient: &http.Client{
 			Timeout: timeout,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: isInsecure},
+			},
 		},
 	}
 	client.getApiLinks()
 	return client
 }
+
 
 // getBaseURL creates a url from the url path passed in and the apiVersion
 func getBaseURL(u url.URL) *url.URL {
