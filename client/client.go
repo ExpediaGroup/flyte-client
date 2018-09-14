@@ -62,7 +62,15 @@ const (
 // timeout specifies a time limit for requests made by this
 // client. A timeout of zero means no timeout.
 // Insecure mode is either true or false
-func NewClient(rootURL *url.URL, timeout time.Duration, isInsecure bool) Client {
+func NewClient(rootURL *url.URL, timeout time.Duration) Client {
+	return newClient(rootURL, timeout, false)
+}
+
+func NewInsecureClient(rootURL *url.URL, timeout time.Duration) Client {
+	return newClient(rootURL, timeout, true)
+}
+
+func newClient(rootURL *url.URL, timeout time.Duration, isInsecure bool) Client {
 	baseUrl := getBaseURL(*rootURL)
 
 	client := &client{
@@ -77,6 +85,7 @@ func NewClient(rootURL *url.URL, timeout time.Duration, isInsecure bool) Client 
 	client.getApiLinks()
 	return client
 }
+
 
 // getBaseURL creates a url from the url path passed in and the apiVersion
 func getBaseURL(u url.URL) *url.URL {

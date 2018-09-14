@@ -52,7 +52,39 @@ func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 	baseUrl, _ := url.Parse(server.URL)
 
 	// when
-	client := NewClient(baseUrl, 10*time.Second, false)
+	client := NewClient(baseUrl, 10*time.Second)
+
+	// then a log error message will have been recorded...
+	assert.Contains(t, logMsg, "cannot get api links:")
+	// ...but the links are available after the retry
+	healthCheckURL, _ := client.GetFlyteHealthCheckURL()
+	assert.Equal(t, "http://example.com/v1/health", healthCheckURL.String())
+}
+
+func Test_InsecureNewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
+	// given the mock flyte-api will first return an error response getting api links...then after retrying will return the expected response
+	apiLinksFailCount := 1
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		if apiLinksFailCount > 0 {
+			apiLinksFailCount -= apiLinksFailCount
+			w.Write(bytes.NewBufferString(flyteApiErrorResponse).Bytes())
+			return
+		}
+		w.Write(bytes.NewBufferString(flyteApiLinksResponse).Bytes())
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	// and code to record the log message/s
+	logMsg := ""
+	loggerFn := logger.Errorf
+	logger.Errorf = func(msg string, args ...interface{}) { logMsg = fmt.Sprintf(msg, args...) }
+	defer func() { logger.Errorf = loggerFn }()
+
+	baseUrl, _ := url.Parse(server.URL)
+
+	// when
+	client := NewInsecureClient(baseUrl, 10*time.Second)
 
 	// then a log error message will have been recorded...
 	assert.Contains(t, logMsg, "cannot get api links:")
@@ -67,7 +99,7 @@ func Test_GetFlyteHealthCheckURL_ShouldSelectFlyteHealthCheckUrlFromFlyteApiLink
 	defer ts.Close()
 
 	baseUrl, _ := url.Parse(ts.URL)
-	client := NewClient(baseUrl, 10*time.Second, false)
+	client := NewClient(baseUrl, 10*time.Second)
 
 	// when
 	healthCheckURL, err := client.GetFlyteHealthCheckURL()
@@ -83,7 +115,7 @@ func Test_GetFlyteHealthCheckURL_ShouldReturnErrorWhenItCannotGetHealthCheckURLF
 	defer ts.Close()
 
 	baseUrl, _ := url.Parse(ts.URL)
-	client := NewClient(baseUrl, 10*time.Second, false)
+	client := NewClient(baseUrl, 10*time.Second)
 
 	// when
 	_, err := client.GetFlyteHealthCheckURL()
@@ -255,7 +287,7 @@ var flyteApiNoLinksResponse = `{
 }`
 
 var flyteApiErrorResponse = `{
-	"error!" 
+	"error!"
 }`
 
 var slackPackResponse = `
@@ -328,6 +360,7 @@ func newTestClient(serverURL string, t *testing.T) *client {
 		apiLinks:   map[string][]Link{"links": {{Href: u, Rel: "pack/listPacks"}}},
 	}
 }
+
 
 type requestsRec struct {
 	reqs []*http.Request
