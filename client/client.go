@@ -19,6 +19,7 @@ limitations under the License.
 package client
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,7 +29,6 @@ import (
 	"path"
 	"strings"
 	"time"
-	"crypto/tls"
 )
 
 type Client interface {
@@ -68,7 +68,7 @@ func NewClient(rootURL *url.URL, timeout time.Duration, IsInsecure bool) Client 
 		baseURL: baseUrl,
 		httpClient: &http.Client{
 			Timeout: timeout,
-			Transport:  &http.Transport{
+			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: IsInsecure},
 			},
 		},

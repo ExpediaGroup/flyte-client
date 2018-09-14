@@ -86,7 +86,7 @@ func ShouldRegisterAndStartNewPack(t *testing.T) {
 		},
 	}
 
-	c := client.NewClient(cfg.FlyteApiUrl, 10*time.Second,false)
+	c := client.NewClient(cfg.FlyteApiUrl, 10*time.Second, false)
 	p := flyte.NewPack(packDef, c)
 	p.Start()
 
@@ -203,7 +203,7 @@ func ShouldHandleEventsAndExecutionOfCommands(t *testing.T) {
 			closeIssueCommand,
 		},
 	}
-	p := flyte.NewPack(packDef, client.NewClient(cfg.FlyteApiUrl, 10*time.Second,false))
+	p := flyte.NewPack(packDef, client.NewClient(cfg.FlyteApiUrl, 10*time.Second, false))
 	flyte.StartHealthCheckServer = false // we do this to stop multiple registrations of the health check server via the various tests
 	p.Start()
 

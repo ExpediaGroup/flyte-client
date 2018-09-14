@@ -52,7 +52,7 @@ func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 	baseUrl, _ := url.Parse(server.URL)
 
 	// when
-	client := NewClient(baseUrl, 10*time.Second,false)
+	client := NewClient(baseUrl, 10*time.Second, false)
 
 	// then a log error message will have been recorded...
 	assert.Contains(t, logMsg, "cannot get api links:")
@@ -67,7 +67,7 @@ func Test_GetFlyteHealthCheckURL_ShouldSelectFlyteHealthCheckUrlFromFlyteApiLink
 	defer ts.Close()
 
 	baseUrl, _ := url.Parse(ts.URL)
-	client := NewClient(baseUrl, 10*time.Second,false)
+	client := NewClient(baseUrl, 10*time.Second, false)
 
 	// when
 	healthCheckURL, err := client.GetFlyteHealthCheckURL()
@@ -83,7 +83,7 @@ func Test_GetFlyteHealthCheckURL_ShouldReturnErrorWhenItCannotGetHealthCheckURLF
 	defer ts.Close()
 
 	baseUrl, _ := url.Parse(ts.URL)
-	client := NewClient(baseUrl, 10*time.Second,false)
+	client := NewClient(baseUrl, 10*time.Second, false)
 
 	// when
 	_, err := client.GetFlyteHealthCheckURL()
@@ -164,7 +164,7 @@ func Test_RegisterPack_ShouldReturnErrorIfPostingPackFails(t *testing.T) {
 	// given a server with a handler that will timeout when called
 	timeout := 10 * time.Millisecond
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(timeout + 1 * time.Millisecond) // this will force a timeout on the http client call so it returns an error
+		time.Sleep(timeout + 1*time.Millisecond) // this will force a timeout on the http client call so it returns an error
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
 	defer ts.Close()
@@ -176,7 +176,7 @@ func Test_RegisterPack_ShouldReturnErrorIfPostingPackFails(t *testing.T) {
 		httpClient: &http.Client{
 			Timeout: timeout,
 		},
-		apiLinks:   map[string][]Link{"links": {{Href: baseUrl, Rel: "pack/listPacks"}}},
+		apiLinks: map[string][]Link{"links": {{Href: baseUrl, Rel: "pack/listPacks"}}},
 	}
 
 	// when
