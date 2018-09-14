@@ -50,7 +50,6 @@ type client struct {
 	takeActionURL *url.URL
 	apiLinks      map[string][]Link
 	httpClient    *http.Client
-	Transport     *http.Transport
 }
 
 const (
