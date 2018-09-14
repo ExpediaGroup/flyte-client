@@ -28,6 +28,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"crypto/tls"
 )
 
 type Client interface {
@@ -49,6 +50,7 @@ type client struct {
 	takeActionURL *url.URL
 	apiLinks      map[string][]Link
 	httpClient    *http.Client
+	Transport     *http.Transport
 }
 
 const (
@@ -59,12 +61,16 @@ const (
 // To create a new client, please provide the url of the flyte server and the timeout.
 // timeout specifies a time limit for requests made by this
 // client. A timeout of zero means no timeout.
-func NewClient(rootURL *url.URL, timeout time.Duration) Client {
+func NewClient(rootURL *url.URL, timeout time.Duration, IsInsecure bool) Client {
 	baseUrl := getBaseURL(*rootURL)
+
 	client := &client{
 		baseURL: baseUrl,
 		httpClient: &http.Client{
 			Timeout: timeout,
+			Transport:  &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: IsInsecure},
+			},
 		},
 	}
 	client.getApiLinks()

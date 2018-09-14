@@ -27,7 +27,7 @@ func ExampleNewClient() {
 	rootUrl, _ := url.Parse("http://example.com/")
 	timeout := 10 * time.Second
 
-	client := client.NewClient(rootUrl, timeout)
+	client := client.NewClient(rootUrl, timeout,false)
 
 	packDef := flyte.PackDef{
 		Name:     "JiraPack",

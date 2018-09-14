@@ -52,7 +52,7 @@ func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 	baseUrl, _ := url.Parse(server.URL)
 
 	// when
-	client := NewClient(baseUrl, 10*time.Second)
+	client := NewClient(baseUrl, 10*time.Second,false)
 
 	// then a log error message will have been recorded...
 	assert.Contains(t, logMsg, "cannot get api links:")
@@ -67,7 +67,7 @@ func Test_GetFlyteHealthCheckURL_ShouldSelectFlyteHealthCheckUrlFromFlyteApiLink
 	defer ts.Close()
 
 	baseUrl, _ := url.Parse(ts.URL)
-	client := NewClient(baseUrl, 10*time.Second)
+	client := NewClient(baseUrl, 10*time.Second,false)
 
 	// when
 	healthCheckURL, err := client.GetFlyteHealthCheckURL()
@@ -83,7 +83,7 @@ func Test_GetFlyteHealthCheckURL_ShouldReturnErrorWhenItCannotGetHealthCheckURLF
 	defer ts.Close()
 
 	baseUrl, _ := url.Parse(ts.URL)
-	client := NewClient(baseUrl, 10*time.Second)
+	client := NewClient(baseUrl, 10*time.Second,false)
 
 	// when
 	_, err := client.GetFlyteHealthCheckURL()
