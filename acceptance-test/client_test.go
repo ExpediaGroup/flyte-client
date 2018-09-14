@@ -37,7 +37,7 @@ func ShouldCreatePack(t *testing.T) {
 	var cfg = config.FromEnvironment()
 
 	p := createPackStruct()
-	c := client.NewClient(cfg.FlyteApiUrl, 10*time.Second,false)
+	c := client.NewClient(cfg.FlyteApiUrl, 10*time.Second)
 
 	if err := c.CreatePack(p); err != nil {
 		t.Fatalf("Failed to create pack: %s", err)
@@ -84,7 +84,7 @@ func ShouldPostEventToPack(t *testing.T) {
 
 	p := createPackStruct()
 
-	c := client.NewClient(cfg.FlyteApiUrl, 10*time.Second,false)
+	c := client.NewClient(cfg.FlyteApiUrl, 10*time.Second)
 	if err := c.CreatePack(p); err != nil {
 		t.Fatalf("Failed to create pack: %s", err)
 	}
@@ -134,7 +134,7 @@ func ShouldTakeAndCompleteActions(t *testing.T) {
 	var cfg = config.FromEnvironment()
 
 	p := createPackStruct()
-	c := client.NewClient(cfg.FlyteApiUrl, 10*time.Second,false)
+	c := client.NewClient(cfg.FlyteApiUrl, 10*time.Second)
 	if err := c.CreatePack(p); err != nil {
 		t.Fatalf("Failed to create pack: %s", err)
 	}

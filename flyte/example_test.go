@@ -79,7 +79,7 @@ func ExampleNewPack() {
 	}
 
 	// Finally we call NewPack() to create a pack struct. This can then be started by calling Start()
-	p := flyte.NewPack(packDef, client.NewClient(createURL("http://example.com"), 10*time.Second,false))
+	p := flyte.NewPack(packDef, client.NewClient(createURL("http://example.com"), 10*time.Second))
 	// p.Start() is not blocking, it is user's responsibility to make sure that the program does not exit immediately
 	p.Start()
 }
