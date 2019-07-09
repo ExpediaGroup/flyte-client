@@ -46,6 +46,7 @@ func Test_NewClient_ShouldSendAuthorizationHeaderWhenRetrievingApiLinks(t *testi
 	NewClient(baseUrl, 10*time.Second)
 
 	// then
+	require.NotEmpty(t, rec.reqs, "A http request must be set!")
 	assert.Equal(t, "Bearer a.jwt.token", rec.reqs[0].Header.Get("Authorization"))
 }
 
@@ -59,6 +60,7 @@ func Test_NewClient_ShouldNotSendAuthorizationHeaderWhenRetrievingApiLinks(t *te
 	NewClient(baseUrl, 10*time.Second)
 
 	// then
+	require.NotEmpty(t, rec.reqs, "A http request must be set!")
 	assert.Equal(t, "", rec.reqs[0].Header.Get("Authorization"))
 }
 
@@ -186,6 +188,7 @@ func Test_CreatePack_ShouldSendAuthorizationHeaderWhenRegisteringPack(t *testing
 	require.NoError(t, err)
 
 	// then
+	require.NotEmpty(t, rec.reqs, "A http request must be set!")
 	assert.Equal(t, "Bearer a.jwt.token", rec.reqs[0].Header.Get("Authorization"))
 }
 
@@ -202,6 +205,7 @@ func Test_CreatePack_ShouldNotSendAuthorizationHeaderWhenRegisteringPack(t *test
 	require.NoError(t, err)
 
 	// then
+	require.NotEmpty(t, rec.reqs, "A http request must be set!")
 	assert.Equal(t, "", rec.reqs[0].Header.Get("Authorization"))
 }
 

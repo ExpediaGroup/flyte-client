@@ -220,20 +220,3 @@ func TestShouldNotGetJWTFromEnvironment(t *testing.T) {
 
 	assert.Equal(t, "", GetJWT())
 }
-
-func TestShouldLogInfoThatJWTIsSet(t *testing.T) {
-	defer restoreGetEnvFunc()
-	defer clearEnv()
-	initTestEnv()
-
-	setEnv(FlyteJWTEnvName, "a.jwt.token")
-
-	loggertest.Init(loggertest.LogLevelInfo)
-	defer loggertest.Reset()
-
-	GetJWT()
-
-	logMessages := loggertest.GetLogMessages()
-	require.Len(t, logMessages, 1)
-	assert.Equal(t, "FLYTE_JWT environment variable is set.", logMessages[0].Message)
-}
