@@ -130,6 +130,16 @@ can be used in the following way:
 
 ```
 
+
+#### JWT Authorisation
+
+If your pack needs to send a JSON Web Token along with each http request, please set the JWT string value in the following 
+environment variable:
+
+-  FLYTE_JWT
+
+If not provided no authorisation will occur. 
+
 #### Help URLs
 
 You will notice that a `helpURL` field is present in 3 locations - PackDef, Command, and EventDef. 

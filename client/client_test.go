@@ -19,6 +19,7 @@ package client
 import (
 	"bytes"
 	"fmt"
+	"github.com/HotelsDotCom/flyte-client/config"
 	"github.com/HotelsDotCom/go-logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,6 +29,38 @@ import (
 	"testing"
 	"time"
 )
+
+func Test_NewClient_ShouldSendAuthorizationHeaderWhenRetrievingApiLinks(t *testing.T) {
+	// given the expected environment variable exists
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+	setEnv(config.FlyteJWTEnvName, "a.jwt.token")
+
+	// and we have a running server set to respond with flyte api links
+	ts, rec := mockServerWithRecorder(http.StatusCreated, flyteApiLinksResponse)
+	defer ts.Close()
+
+	// when we create a new client
+	baseUrl, _ := url.Parse(ts.URL)
+	NewClient(baseUrl, 10*time.Second)
+
+	// then
+	assert.Equal(t, "Bearer a.jwt.token", rec.reqs[0].Header.Get("Authorization"))
+}
+
+func Test_NewClient_ShouldNotSendAuthorizationHeaderWhenRetrievingApiLinks(t *testing.T) {
+	// given the jwt environment variable does not exist and we have a running server set to respond with flyte api links
+	ts, rec := mockServerWithRecorder(http.StatusCreated, flyteApiLinksResponse)
+	defer ts.Close()
+
+	// when we create a new client
+	baseUrl, _ := url.Parse(ts.URL)
+	NewClient(baseUrl, 10*time.Second)
+
+	// then
+	assert.Equal(t, "", rec.reqs[0].Header.Get("Authorization"))
+}
 
 func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 	// given the mock flyte-api will first return an error response getting api links...then after retrying will return the expected response
@@ -139,6 +172,39 @@ func Test_TakeAction_ShouldReturnSpecificErrorTypeAndMessageWhenResourceIsNotFou
 	assert.EqualError(t, err, fmt.Sprintf("resource not found at %s/take/action/url", ts.URL))
 }
 
+func Test_CreatePack_ShouldSendAuthorizationHeaderWhenRegisteringPack(t *testing.T) {
+	// given we have a running server set to respond with a pack json
+	ts, rec := mockServerWithRecorder(http.StatusCreated, slackPackResponse)
+	defer ts.Close()
+
+	// and a client with the token set
+	c := newTestClient(ts.URL, t)
+	c.jwt = "a.jwt.token"
+
+	// when we create a pack
+	err := c.CreatePack(Pack{Name: "Slack"})
+	require.NoError(t, err)
+
+	// then
+	assert.Equal(t, "Bearer a.jwt.token", rec.reqs[0].Header.Get("Authorization"))
+}
+
+func Test_CreatePack_ShouldNotSendAuthorizationHeaderWhenRegisteringPack(t *testing.T) {
+	// given we have a running server set to respond with a pack json
+	ts, rec := mockServerWithRecorder(http.StatusCreated, slackPackResponse)
+	defer ts.Close()
+
+	// and a client without the token set
+	c := newTestClient(ts.URL, t)
+
+	// when we create a pack
+	err := c.CreatePack(Pack{Name: "Slack"})
+	require.NoError(t, err)
+
+	// then
+	assert.Equal(t, "", rec.reqs[0].Header.Get("Authorization"))
+}
+
 func Test_CreatePack_ShouldRegisterPackWithApiAndPopulateClientWithLinks(t *testing.T) {
 
 	ts, rec := mockServerWithRecorder(http.StatusCreated, slackPackResponse)
@@ -244,40 +310,40 @@ func Test_RegisterPack_ShouldReturnErrorIfResponseCannotBeDecoded(t *testing.T) 
 var flyteApiLinksResponse = `{
 	"links": [
 		{
-		"href": "http://example.com/v1",
-		"rel": "self"
+			"href": "http://example.com/v1",
+			"rel": "self"
 		},
 		{
-		"href": "http://example.com/",
-		"rel": "up"
+			"href": "http://example.com/",
+			"rel": "up"
 		},
 		{
-		"href": "http://example.com/swagger#!/info/v1",
-		"rel": "help"
+			"href": "http://example.com/swagger#!/info/v1",
+			"rel": "help"
 		},
 		{
-		"href": "http://example.com/v1/health",
-		"rel": "http://example.com/swagger#!/info/health"
+			"href": "http://example.com/v1/health",
+			"rel": "http://example.com/swagger#!/info/health"
 		},
 		{
-		"href": "http://example.com/v1/packs",
-		"rel": "http://example.com/swagger#!/pack/listPacks"
+			"href": "http://example.com/v1/packs",
+			"rel": "http://example.com/swagger#!/pack/listPacks"
 		},
 		{
-		"href": "http://example.com/v1/flows",
-		"rel": "http://example.com/swagger#!/flow/listFlows"
+			"href": "http://example.com/v1/flows",
+			"rel": "http://example.com/swagger#!/flow/listFlows"
 		},
 		{
-		"href": "http://example.com/v1/datastore",
-		"rel": "http://example.com/swagger#!/datastore/listDataItems"
+			"href": "http://example.com/v1/datastore",
+			"rel": "http://example.com/swagger#!/datastore/listDataItems"
 		},
 		{
-		"href": "http://example.com/v1/audit/flows",
-		"rel": "http://example.com/swagger#!/audit/findFlows"
+			"href": "http://example.com/v1/audit/flows",
+			"rel": "http://example.com/swagger#!/audit/findFlows"
 		},
 		{
-		"href": "http://example.com/v1/swagger",
-		"rel": "http://example.com/swagger"
+			"href": "http://example.com/v1/swagger",
+			"rel": "http://example.com/swagger"
 		}
 	]
 }`
@@ -369,3 +435,27 @@ type requestsRec struct {
 func (rr *requestsRec) add(r *http.Request) {
 	rr.reqs = append(rr.reqs, r)
 }
+
+// environment variable help
+
+var envvars = map[string]string{}
+var origGetEnv = config.GetEnv
+
+func initTestEnv() {
+	config.GetEnv = func(name string) string {
+		return envvars[name]
+	}
+}
+
+func restoreGetEnvFunc() {
+	config.GetEnv = origGetEnv
+}
+
+func setEnv(name, value string) {
+	envvars[name] = value
+}
+
+func clearEnv() {
+	envvars = map[string]string{}
+}
+

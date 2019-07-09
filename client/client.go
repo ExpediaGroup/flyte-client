@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/HotelsDotCom/flyte-client/config"
 	"github.com/HotelsDotCom/go-logger"
 	"net/http"
 	"net/url"
@@ -50,6 +51,7 @@ type client struct {
 	takeActionURL *url.URL
 	apiLinks      map[string][]Link
 	httpClient    *http.Client
+	jwt			  string
 }
 
 const (
@@ -80,6 +82,7 @@ func newClient(rootURL *url.URL, timeout time.Duration, isInsecure bool) Client 
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: isInsecure},
 			},
 		},
+		jwt: config.GetJWT(),
 	}
 	client.getApiLinks()
 	return client
