@@ -38,10 +38,6 @@ func (c client) post(u *url.URL, body interface{}) (*http.Response, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	if c.jwt != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.jwt))
-	}
-
 	return c.httpClient.Do(req)
 }
 
@@ -53,10 +49,6 @@ func (c client) get(u *url.URL) (*http.Response, error) {
 		return nil, fmt.Errorf("cannot create request: %v", err)
 	}
 	req.Header.Set("Accept", "application/json")
-
-	if c.jwt != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.jwt))
-	}
 
 	return c.httpClient.Do(req)
 }

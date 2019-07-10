@@ -184,9 +184,14 @@ func Test_CreatePack_ShouldSendAuthorizationHeaderWhenRegisteringPack(t *testing
 	ts, rec := mockServerWithRecorder(http.StatusCreated, slackPackResponse)
 	defer ts.Close()
 
-	// and a client with the token set
+	// and the jwt environment variable exists
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+	setEnv(config.FlyteJWTEnvName, "a.jwt.token")
+
+	// and a client
 	c := newTestClient(ts.URL, t)
-	c.jwt = "a.jwt.token"
 
 	// when we create a pack
 	err := c.CreatePack(Pack{Name: "Slack"})
@@ -324,9 +329,14 @@ func Test_PostEvent_ShouldSendAuthorizationHeader(t *testing.T) {
 	ts, rec := mockServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
 	defer ts.Close()
 
-	// and a client with the token set
+	// and the jwt environment variable exists
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+	setEnv(config.FlyteJWTEnvName, "a.jwt.token")
+
+	// and a client
 	c := newTestClient(ts.URL, t)
-	c.jwt = "a.jwt.token"
 
 	// and an events url set
 	u, _ := url.Parse(fmt.Sprintf("%s/v1/packs/Slack/events", ts.URL))
@@ -371,9 +381,14 @@ func Test_TakeAction_ShouldSendAuthorizationHeader(t *testing.T) {
 	ts, rec := mockServerWithRecorder(http.StatusOK, `{"some":"response"}`)
 	defer ts.Close()
 
-	// and a client with the token set
+	// and the jwt environment variable exists
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+	setEnv(config.FlyteJWTEnvName, "a.jwt.token")
+
+	// and a client
 	c := newTestClient(ts.URL, t)
-	c.jwt = "a.jwt.token"
 
 	// and a take action url set
 	u, _ := url.Parse(fmt.Sprintf("%s/v1/packs/Slack/actions/take", ts.URL))
@@ -433,9 +448,14 @@ func Test_CompleteAction_ShouldSendAuthorizationHeader(t *testing.T) {
 	ts, rec := mockServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
 	defer ts.Close()
 
-	// and a client with the token set
+	// and the jwt environment variable exists
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+	setEnv(config.FlyteJWTEnvName, "a.jwt.token")
+
+	// and a client
 	c := newTestClient(ts.URL, t)
-	c.jwt = "a.jwt.token"
 
 	// and an action result url set
 	actionResultUrl, _ := url.Parse(fmt.Sprintf("%s/v1/actionResult", ts.URL))
@@ -621,7 +641,7 @@ func newTestClient(serverURL string, t *testing.T) *client {
 	require.NoError(t, err)
 
 	return &client{
-		httpClient: &http.Client{Timeout: 5 * time.Second},
+		httpClient: newHttpClient(5 * time.Second, false),
 		apiLinks:   map[string][]Link{"links": {{Href: u, Rel: "pack/listPacks"}}},
 	}
 }
