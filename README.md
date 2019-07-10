@@ -140,6 +140,8 @@ environment variable:
 
 If not provided no authorisation will occur.
 
+Note: You are strongly advised to only use JWT authorisation over https.
+
 #### Help URLs
 
 You will notice that a `helpURL` field is present in 3 locations - PackDef, Command, and EventDef. 
