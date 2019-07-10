@@ -140,8 +140,6 @@ environment variable:
 
 If not provided no authorisation will occur.
 
-NOTE: Using an insecure client with JWT authorisation is strictly forbidden and will prevent your pack starting. 
-
 #### Help URLs
 
 You will notice that a `helpURL` field is present in 3 locations - PackDef, Command, and EventDef. 
