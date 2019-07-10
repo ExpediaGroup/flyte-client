@@ -67,9 +67,6 @@ func NewClient(rootURL *url.URL, timeout time.Duration) Client {
 }
 
 func NewInsecureClient(rootURL *url.URL, timeout time.Duration) Client {
-	if config.GetJWT() != "" {
-		logger.Fatal("Using JWT on an insecure client is strictly forbidden!")
-	}
 	return newClient(rootURL, timeout, true)
 }
 

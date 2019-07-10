@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"github.com/HotelsDotCom/flyte-client/config"
 	"github.com/HotelsDotCom/go-logger"
-	"github.com/HotelsDotCom/go-logger/loggertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -99,30 +98,6 @@ func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 	// ...but the links are available after the retry
 	healthCheckURL, _ := client.GetFlyteHealthCheckURL()
 	assert.Equal(t, "http://example.com/v1/health", healthCheckURL.String())
-}
-
-func Test_InsecureNewClient_ShouldLogFatalWhenJWTIsProvided(t *testing.T) {
-	// given the jwt environment variable exists
-	defer restoreGetEnvFunc()
-	defer clearEnv()
-	initTestEnv()
-	setEnv(config.FlyteJWTEnvName, "a.jwt.token")
-
-	// and code to record the log message
-	loggertest.Init(loggertest.LogLevelFatal)
-	defer loggertest.Reset()
-
-	// then block goes here :)
-	defer func() {
-		if r := recover(); r != nil {
-			logMessages := loggertest.GetLogMessages()
-			assert.Contains(t, logMessages[0].RawMessage, "Using JWT on an insecure client is strictly forbidden!")
-		}
-	}()
-
-	// when we create a new insecure client
-	baseUrl, _ := url.Parse("http://some.com/url")
-	NewInsecureClient(baseUrl, 10*time.Second)
 }
 
 func Test_InsecureNewClient_ShouldNotLogFatalWhenJWTIsNotProvided(t *testing.T) {
