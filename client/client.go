@@ -95,19 +95,19 @@ func newHttpClient(timeout time.Duration, isInsecure bool) *http.Client {
 
 	// this decorates the client transport with the jwt header
 	if config.GetJWT() != "" {
-		t := withHeader{Header: make(http.Header), rt: httpClient.Transport}
+		t := transportWithHeader{Header: make(http.Header), rt: httpClient.Transport}
 		t.Set("Authorization", fmt.Sprintf("Bearer %s", config.GetJWT()))
 		httpClient.Transport = t
 	}
 	return httpClient
 }
 
-type withHeader struct {
+type transportWithHeader struct {
 	http.Header
 	rt http.RoundTripper
 }
 
-func (h withHeader) RoundTrip(req *http.Request) (*http.Response, error) {
+func (h transportWithHeader) RoundTrip(req *http.Request) (*http.Response, error) {
 	for k, v := range h.Header {
 		req.Header[k] = v
 	}
