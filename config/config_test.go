@@ -26,16 +26,16 @@ import (
 )
 
 var envvars = map[string]string{}
-var origGetEnv = getEnv
+var origGetEnv = GetEnv
 
 func initTestEnv() {
-	getEnv = func(name string) string {
+	GetEnv = func(name string) string {
 		return envvars[name]
 	}
 }
 
 func restoreGetEnvFunc() {
-	getEnv = origGetEnv
+	GetEnv = origGetEnv
 }
 
 func setEnv(name, value string) {
@@ -48,6 +48,7 @@ func clearEnv() {
 
 func TestShouldSetStandardSettingsFromEnvironment(t *testing.T) {
 	defer restoreGetEnvFunc()
+	defer clearEnv()
 	initTestEnv()
 
 	setEnv(flyteApiEnvName, "http://localhost:8080")
@@ -67,6 +68,7 @@ func TestShouldSetStandardSettingsFromEnvironment(t *testing.T) {
 
 func TestShouldLogFatalMessageWhenApiUrlIsNotSet(t *testing.T) {
 	defer restoreGetEnvFunc()
+	defer clearEnv()
 	initTestEnv()
 
 	// setup loggertest
@@ -83,13 +85,12 @@ func TestShouldLogFatalMessageWhenApiUrlIsNotSet(t *testing.T) {
 		}
 	}()
 
-	clearEnv()
-
 	getFlyteApiUrl()
 }
 
 func TestShouldLogFatalWhenApiUrlIsInvalid(t *testing.T) {
 	defer restoreGetEnvFunc()
+	defer clearEnv()
 	initTestEnv()
 
 	setEnv(flyteApiEnvName, "://locahost:8080")
@@ -105,13 +106,11 @@ func TestShouldLogFatalWhenApiUrlIsInvalid(t *testing.T) {
 	logMessages := loggertest.GetLogMessages()
 	require.Len(t, logMessages, 1)
 	assert.Contains(t, logMessages[0].RawMessage, "FLYTE_API environment variable is not set")
-
-	clearEnv()
-
 }
 
 func TestShouldSetApiTimeOutToDefaultValueAndLogThatWhenEnvironmentVariableNotSet(t *testing.T) {
 	defer restoreGetEnvFunc()
+	defer clearEnv()
 	initTestEnv()
 
 	loggertest.Init(loggertest.LogLevelInfo)
@@ -125,12 +124,11 @@ func TestShouldSetApiTimeOutToDefaultValueAndLogThatWhenEnvironmentVariableNotSe
 	logMessages := loggertest.GetLogMessages()
 	require.Len(t, logMessages, 1)
 	assert.Equal(t, expectedMessage, logMessages[0].Message)
-
-	clearEnv()
 }
 
 func TestShouldFailWhenApiTimeOutIsInvalidValue(t *testing.T) {
 	defer restoreGetEnvFunc()
+	defer clearEnv()
 	initTestEnv()
 
 	setEnv(flyteApiTimeOutEnvName, "a")
@@ -146,12 +144,11 @@ func TestShouldFailWhenApiTimeOutIsInvalidValue(t *testing.T) {
 	logMessages := loggertest.GetLogMessages()
 	require.Len(t, logMessages, 1)
 	assert.Contains(t, logMessages[0].RawMessage, expectedMessage)
-
-	clearEnv()
 }
 
 func TestShouldLogFatalWhenApiTimeOutValueIsSetToLessThanZero(t *testing.T) {
 	defer restoreGetEnvFunc()
+	defer clearEnv()
 	initTestEnv()
 
 	loggertest.Init(loggertest.LogLevelFatal)
@@ -166,12 +163,11 @@ func TestShouldLogFatalWhenApiTimeOutValueIsSetToLessThanZero(t *testing.T) {
 	logMessages := loggertest.GetLogMessages()
 	require.Len(t, logMessages, 1)
 	assert.Contains(t, logMessages[0].RawMessage, expectedMessage)
-
-	clearEnv()
 }
 
 func TestShouldLogFatalErrorWhenLabelsEnvironmentVariableIsSetToAnInvalidValue(t *testing.T) {
 	defer restoreGetEnvFunc()
+	defer clearEnv()
 	initTestEnv()
 
 	loggertest.Init(loggertest.LogLevelFatal)
@@ -186,12 +182,11 @@ func TestShouldLogFatalErrorWhenLabelsEnvironmentVariableIsSetToAnInvalidValue(t
 	logMessages := loggertest.GetLogMessages()
 	require.Len(t, logMessages, 1)
 	assert.Contains(t, logMessages[0].RawMessage, expectedMessage)
-
-	clearEnv()
 }
 
 func TestShouldLogInfoThatLabelsEnvironmentVariableIsNotSet(t *testing.T) {
 	defer restoreGetEnvFunc()
+	defer clearEnv()
 	initTestEnv()
 
 	loggertest.Init(loggertest.LogLevelInfo)
@@ -204,6 +199,24 @@ func TestShouldLogInfoThatLabelsEnvironmentVariableIsNotSet(t *testing.T) {
 	logMessages := loggertest.GetLogMessages()
 	require.Len(t, logMessages, 1)
 	assert.Equal(t, expectedMessage, logMessages[0].Message)
+}
 
-	clearEnv()
+func TestShouldGetJWTFromEnvironment(t *testing.T) {
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+
+	setEnv(FlyteJWTEnvName, "a.jwt.token")
+
+	assert.Equal(t, "a.jwt.token", GetJWT())
+}
+
+func TestShouldNotGetJWTFromEnvironment(t *testing.T) {
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+
+	// no jwt set in environment
+
+	assert.Equal(t, "", GetJWT())
 }

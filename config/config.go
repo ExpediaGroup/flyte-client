@@ -28,11 +28,12 @@ import (
 const (
 	apiTimeoutOutDefault   = time.Second * 10
 	flyteApiEnvName        = "FLYTE_API"
+	FlyteJWTEnvName        = "FLYTE_JWT"
 	flyteLabelsEnvName     = "FLYTE_LABELS"
 	flyteApiTimeOutEnvName = "FLYTE_API_TIMEOUT"
 )
 
-var getEnv = os.Getenv
+var GetEnv = os.Getenv
 
 type Values struct {
 	Labels      map[string]string
@@ -47,7 +48,7 @@ func FromEnvironment() Values {
 
 // checks that the flyteApi env FLYTE_API is set
 func getFlyteApiUrl() *url.URL {
-	apiEnvUrl := getEnv(flyteApiEnvName)
+	apiEnvUrl := GetEnv(flyteApiEnvName)
 	if apiEnvUrl == "" {
 		logger.Fatalf("%s environment variable is not set", flyteApiEnvName)
 	}
@@ -62,7 +63,7 @@ func getFlyteApiUrl() *url.URL {
 
 // checks that FLYTE_LABELS is set and it's value(s) are correct
 func getLabels() (labels map[string]string) {
-	labelsString := getEnv(flyteLabelsEnvName)
+	labelsString := GetEnv(flyteLabelsEnvName)
 	labels = make(map[string]string)
 
 	if labelsString == "" {
@@ -84,7 +85,7 @@ func getLabels() (labels map[string]string) {
 // checks that the FLYTE_API_TIMEOUT is set, and if not sets to the default value.
 func getApiTimeOut() time.Duration {
 
-	apiTimeOut := getEnv(flyteApiTimeOutEnvName)
+	apiTimeOut := GetEnv(flyteApiTimeOutEnvName)
 
 	if apiTimeOut == "" {
 		logger.Infof("FLYTE_API_TIMEOUT environment variable is not set, setting to default of %v", apiTimeoutOutDefault)
@@ -101,4 +102,12 @@ func getApiTimeOut() time.Duration {
 	}
 
 	return time.Second * time.Duration(apiTimeOutInt)
+}
+
+func GetJWT() string {
+	jwt := GetEnv(FlyteJWTEnvName)
+	if jwt != "" {
+		logger.Infof("%s environment variable is set.", FlyteJWTEnvName)
+	}
+	return jwt
 }

@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/HotelsDotCom/flyte-client/config"
 	"github.com/HotelsDotCom/go-logger"
 	"net/http"
 	"net/url"
@@ -70,26 +71,47 @@ func NewInsecureClient(rootURL *url.URL, timeout time.Duration) Client {
 }
 
 func newClient(rootURL *url.URL, timeout time.Duration, isInsecure bool) Client {
-	baseUrl := getBaseURL(*rootURL)
-
 	client := &client{
-		baseURL: baseUrl,
-		httpClient: &http.Client{
-			Timeout: timeout,
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: isInsecure},
-			},
-		},
+		baseURL: getBaseURL(*rootURL),
+		httpClient: newHttpClient(timeout, isInsecure),
 	}
 	client.getApiLinks()
 	return client
 }
 
-
 // getBaseURL creates a url from the url path passed in and the apiVersion
 func getBaseURL(u url.URL) *url.URL {
 	u.Path = path.Join(u.Path, ApiVersion)
 	return &u
+}
+
+func newHttpClient(timeout time.Duration, isInsecure bool) *http.Client {
+	httpClient := &http.Client{
+		Timeout: timeout,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: isInsecure},
+		},
+	}
+
+	// this decorates the client transport with the jwt header
+	if config.GetJWT() != "" {
+		t := transportWithHeader{Header: make(http.Header), rt: httpClient.Transport}
+		t.Set("Authorization", fmt.Sprintf("Bearer %s", config.GetJWT()))
+		httpClient.Transport = t
+	}
+	return httpClient
+}
+
+type transportWithHeader struct {
+	http.Header
+	rt http.RoundTripper
+}
+
+func (h transportWithHeader) RoundTrip(req *http.Request) (*http.Response, error) {
+	for k, v := range h.Header {
+		req.Header[k] = v
+	}
+	return h.rt.RoundTrip(req)
 }
 
 // getApiLinks retrieves links from the flyte api server that are useful to the client such as packs url and health url and so on
