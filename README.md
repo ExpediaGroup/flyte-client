@@ -7,11 +7,19 @@ The client handles the registration of a pack with the flyte server, consuming a
 pack events to the flyte server. This allows the pack writer to concentrate solely on the functionality of their pack.
 
 
-## Getting started
+# Getting started
+
+## Install
+```
+go get github.com/HotelsDotCom/flyte-client
+```
+
+## Usage
+```
+import "github.com/HotelsDotCom/flyte-client"
+```
 
 * Clone this repo
-* Run `dep ensure` (must have [dep](https://github.com/golang/dep) installed )
-
 The 'entry point' for the client is the flyte package (specifically flyte/pack.go). To build the client locally therefore run:
 
 ```
