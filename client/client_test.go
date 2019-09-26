@@ -31,8 +31,8 @@ import (
 )
 
 /**
-	NewClient, InsecureNewClient tests
- */
+NewClient, InsecureNewClient tests
+*/
 
 func Test_NewClient_ShouldSendAuthorizationHeaderWhenRetrievingApiLinks(t *testing.T) {
 	// given the expected environment variable exists
@@ -151,8 +151,8 @@ func Test_InsecureNewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T)
 }
 
 /**
-	CreatePack tests
- */
+CreatePack tests
+*/
 
 func Test_CreatePack_ShouldSendAuthorizationHeaderWhenRegisteringPack(t *testing.T) {
 	// given we have a running server set to respond with a pack json
@@ -296,8 +296,8 @@ func Test_CreatePack_ShouldReturnErrorIfResponseCannotBeDecoded(t *testing.T) {
 }
 
 /**
-	PostEvent tests
- */
+PostEvent tests
+*/
 
 func Test_PostEvent_ShouldSendAuthorizationHeader(t *testing.T) {
 	// given we have a running server
@@ -318,7 +318,7 @@ func Test_PostEvent_ShouldSendAuthorizationHeader(t *testing.T) {
 	c.eventsURL = u
 
 	// when
-	err := c.PostEvent(Event{Name:"Dave", Payload:`{"some":"thing"}`})
+	err := c.PostEvent(Event{Name: "Dave", Payload: `{"some":"thing"}`})
 
 	// then
 	require.NoError(t, err)
@@ -339,7 +339,7 @@ func Test_PostEvent_ShouldNotSendAuthorizationHeader(t *testing.T) {
 	c.eventsURL = u
 
 	// when
-	err := c.PostEvent(Event{Name:"Dave", Payload:`{"some":"thing"}`})
+	err := c.PostEvent(Event{Name: "Dave", Payload: `{"some":"thing"}`})
 
 	// then
 	require.NoError(t, err)
@@ -347,9 +347,9 @@ func Test_PostEvent_ShouldNotSendAuthorizationHeader(t *testing.T) {
 	assert.Equal(t, "", rec.reqs[0].Header.Get("Authorization"))
 }
 
- /**
-	TakeAction tests
- */
+/**
+TakeAction tests
+*/
 
 func Test_TakeAction_ShouldSendAuthorizationHeader(t *testing.T) {
 	// given we have a running server
@@ -415,7 +415,7 @@ func Test_TakeAction_ShouldReturnSpecificErrorTypeAndMessageWhenResourceIsNotFou
 }
 
 /**
-   CompleteAction tests
+  CompleteAction tests
 */
 
 func Test_CompleteAction_ShouldSendAuthorizationHeader(t *testing.T) {
@@ -434,10 +434,10 @@ func Test_CompleteAction_ShouldSendAuthorizationHeader(t *testing.T) {
 
 	// and an action result url set
 	actionResultUrl, _ := url.Parse(fmt.Sprintf("%s/v1/actionResult", ts.URL))
-	action := Action{Links:[]Link{{Href:actionResultUrl, Rel:"actionResult"}}}
+	action := Action{Links: []Link{{Href: actionResultUrl, Rel: "actionResult"}}}
 
 	// when
-	err := c.CompleteAction(action, Event{Name:"Dave", Payload:`{"some":"thing"}`})
+	err := c.CompleteAction(action, Event{Name: "Dave", Payload: `{"some":"thing"}`})
 
 	// then
 	require.NoError(t, err)
@@ -455,10 +455,10 @@ func Test_CompleteAction_ShouldNotSendAuthorizationHeader(t *testing.T) {
 
 	// and an action result url set
 	actionResultUrl, _ := url.Parse(fmt.Sprintf("%s/v1/actionResult", ts.URL))
-	action := Action{Links:[]Link{{Href:actionResultUrl, Rel:"actionResult"}}}
+	action := Action{Links: []Link{{Href: actionResultUrl, Rel: "actionResult"}}}
 
 	// when
-	err := c.CompleteAction(action, Event{Name:"Dave", Payload:`{"some":"thing"}`})
+	err := c.CompleteAction(action, Event{Name: "Dave", Payload: `{"some":"thing"}`})
 
 	// then
 	require.NoError(t, err)
@@ -467,7 +467,7 @@ func Test_CompleteAction_ShouldNotSendAuthorizationHeader(t *testing.T) {
 }
 
 /**
-   GetFlyteHealthCheckURL tests
+  GetFlyteHealthCheckURL tests
 */
 
 func Test_GetFlyteHealthCheckURL_ShouldSelectFlyteHealthCheckUrlFromFlyteApiLinks(t *testing.T) {
@@ -616,7 +616,7 @@ func newTestClient(serverURL string, t *testing.T) *client {
 	require.NoError(t, err)
 
 	return &client{
-		httpClient: newHttpClient(5 * time.Second, false),
+		httpClient: newHttpClient(5*time.Second, false),
 		apiLinks:   map[string][]Link{"links": {{Href: u, Rel: "pack/listPacks"}}},
 	}
 }
@@ -651,4 +651,3 @@ func setEnv(name, value string) {
 func clearEnv() {
 	envvars = map[string]string{}
 }
-
