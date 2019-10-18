@@ -32,7 +32,7 @@ func ExampleNewClient() {
 	packDef := flyte.PackDef{
 		Name:     "JiraPack",
 		Commands: []flyte.Command{
-		// command/s
+			// command/s
 		},
 	}
 	p := flyte.NewPack(packDef, client)

@@ -72,7 +72,7 @@ func NewInsecureClient(rootURL *url.URL, timeout time.Duration) Client {
 
 func newClient(rootURL *url.URL, timeout time.Duration, isInsecure bool) Client {
 	client := &client{
-		baseURL: getBaseURL(*rootURL),
+		baseURL:    getBaseURL(*rootURL),
 		httpClient: newHttpClient(timeout, isInsecure),
 	}
 	client.getApiLinks()
