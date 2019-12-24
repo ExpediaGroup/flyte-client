@@ -23,7 +23,7 @@ import "github.com/HotelsDotCom/flyte-client"
 The 'entry point' for the client is the flyte package (specifically flyte/pack.go). To build the client locally therefore run:
 
 ```
-go build -v ./flyte
+make build
 ```
 
 #### Go Docs
@@ -31,7 +31,8 @@ The Go docs can be found at:
 
 ```
 # start godoc server
-godoc -http=:6060
+make docs
+
 # navigate to
 http://localhost:6060/pkg/github.com/HotelsDotCom/flyte-client
 ```
@@ -149,6 +150,13 @@ environment variable:
 If not provided no authorisation will occur.
 
 Note: You are strongly advised to only use JWT authorisation over https.
+
+#### TLS - Self-signed certificates
+
+If your pack needs to connect to a flyte server with a self-signed certificate, please set your custom Certificate authority (CA) PEM file location as 
+an environment variable, so flyte client can add it to the trusted root certificates:
+
+- FLYTE_CA_CERT_FILE
 
 #### Help URLs
 
@@ -285,13 +293,13 @@ func exampleHealthCheck() healthcheck.HealthCheck {
 To run just the unit tests use:
 
 ```
-go test ./...
+make test
 ```
 
 To run all tests, then use:
 
 ```
-go test ./... -tags=acceptance
+make test-all
 ```
 
 If you want to provide a custom Flyte-API image to run tests against, set the environment variable FLYTE_API_IMAGE. E.g:

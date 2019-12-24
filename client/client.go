@@ -20,11 +20,13 @@ package client
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/HotelsDotCom/flyte-client/config"
 	"github.com/HotelsDotCom/go-logger"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -85,11 +87,38 @@ func getBaseURL(u url.URL) *url.URL {
 	return &u
 }
 
+var readCAFile = ioutil.ReadFile
+
+func getTlsConfig(isInsecure bool) *tls.Config {
+	if config.GetCustomCAFile() != "" {
+		rootCAs, _ := x509.SystemCertPool()
+		if rootCAs == nil {
+			rootCAs = x509.NewCertPool()
+		}
+
+		certs, err := readCAFile(config.GetCustomCAFile())
+		if err != nil {
+			logger.Errorf("Failed to append %s to RootCAs: %v", config.GetCustomCAFile(), err)
+		}
+
+		if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
+			logger.Errorf("No certs appended, using system certs only")
+		}
+
+		return &tls.Config{
+			InsecureSkipVerify: isInsecure,
+			RootCAs:            rootCAs,
+		}
+	}
+
+	return &tls.Config{InsecureSkipVerify: isInsecure}
+}
+
 func newHttpClient(timeout time.Duration, isInsecure bool) *http.Client {
 	httpClient := &http.Client{
 		Timeout: timeout,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: isInsecure},
+			TLSClientConfig: getTlsConfig(isInsecure),
 		},
 	}
 
@@ -99,6 +128,7 @@ func newHttpClient(timeout time.Duration, isInsecure bool) *http.Client {
 		t.Set("Authorization", fmt.Sprintf("Bearer %s", config.GetJWT()))
 		httpClient.Transport = t
 	}
+
 	return httpClient
 }
 

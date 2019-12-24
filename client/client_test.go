@@ -18,11 +18,19 @@ package client
 
 import (
 	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
 	"github.com/HotelsDotCom/flyte-client/config"
 	"github.com/HotelsDotCom/go-logger"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"math/big"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -34,6 +42,124 @@ import (
 NewClient, InsecureNewClient tests
 */
 
+func Test_NewClient_TLS_Fails(t *testing.T) {
+	tests := []struct {
+		name          string
+		certFile      string
+		expectedError string
+	}{
+		{
+			name:          "when FLYTE_CA_CERT_FILE ENV var is not provided",
+			certFile:      "",
+			expectedError: "certificate signed by unknown authority",
+		},
+		{
+			name:          "when FLYTE_CA_CERT_FILE is provided but file is not found",
+			certFile:      "unknow-path/ca.pem",
+			expectedError: "Failed to append unknow-path/ca.pem to RootCAs",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			defer restoreGetEnvFunc()
+			defer clearEnv()
+			initTestEnv()
+			setEnv(config.FlyteJWTEnvName, "a.jwt.token")
+			setEnv(config.FlyteCACertFileEnvName, test.certFile)
+
+			logMsg := ""
+			loggerFn := logger.Errorf
+			logger.Errorf = func(msg string, args ...interface{}) { logMsg += fmt.Sprintf(msg, args...) }
+			defer func() { logger.Errorf = loggerFn }()
+
+			server, rec := mockTLSServerWithRecorder(200, flyteApiNoLinksResponse)
+			defer server.Close()
+
+			// NewClient goes by default into an infinite loop of retries trying to fetch the api links,
+			// so we need to do this hack and timeout the channel to verify the recorder.
+			done := make(chan struct{})
+			go func() {
+				baseUrl, _ := url.Parse(server.URL)
+				NewClient(baseUrl, 250*time.Millisecond)
+				close(done)
+			}()
+
+			select {
+			case <-done:
+				assert.Fail(t, "channel can't be close. NewClient should always go on infinite loop")
+			case <-time.After(500 * time.Millisecond):
+				assert.Contains(t, logMsg, test.expectedError)
+				assert.Equal(t, 0, len(rec.reqs), "we should never reach the server endpoints")
+			}
+		})
+	}
+}
+
+func Test_NewClient_TLS_VerifiesServerCertificateWhenUsingCustomCA(t *testing.T) {
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+	setEnv(config.FlyteJWTEnvName, "a.jwt.token")
+	setEnv(config.FlyteCACertFileEnvName, "ca.pem")
+
+	server, rec := mockTLSServerWithRecorder(200, flyteApiNoLinksResponse)
+	defer server.Close()
+
+	readCAFileFn := readCAFile
+	readCAFile = func(filename string) (i []byte, e error) {
+		cert, _ := x509.ParseCertificate(server.TLS.Certificates[0].Certificate[0])
+		b := pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}
+		return pem.EncodeToMemory(&b), nil
+	}
+	defer func() { readCAFile = readCAFileFn }()
+
+
+	baseUrl, _ := url.Parse(server.URL)
+	NewClient(baseUrl, 1*time.Second)
+	assert.Equal(t, "/v1", rec.reqs[0].URL.Path)
+}
+
+func Test_NewClient_TLS_FailsToVerifyServerCertificateDoesNotMatchCustomCA(t *testing.T) {
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+	setEnv(config.FlyteJWTEnvName, "a.jwt.token")
+	setEnv(config.FlyteCACertFileEnvName, "ca.pem")
+
+	readCAFileFn := readCAFile
+	readCAFile = func(filename string) (i []byte, e error) {
+		rootCertPEM, err := createCAPemCert()
+		if err != nil {
+			return nil, err
+		}
+		return rootCertPEM, nil
+	}
+	defer func() { readCAFile = readCAFileFn }()
+
+	logMsg := ""
+	loggerFn := logger.Errorf
+	logger.Errorf = func(msg string, args ...interface{}) { logMsg += fmt.Sprintf(msg, args...) }
+	defer func() { logger.Errorf = loggerFn }()
+
+	server, rec := mockTLSServerWithRecorder(200, flyteApiNoLinksResponse)
+	defer server.Close()
+
+	done := make(chan struct{})
+	go func() {
+		baseUrl, _ := url.Parse(server.URL)
+		NewClient(baseUrl, 250*time.Millisecond)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		assert.Fail(t, "channel can't be close. NewClient should always go on infinite loop")
+	case <-time.After(1 * time.Second):
+		assert.Contains(t, logMsg, "certificate signed by unknown authority")
+		assert.Equal(t, 0, len(rec.reqs), "we should never reach the server endpoints")
+	}
+}
+
 func Test_NewClient_ShouldSendAuthorizationHeaderWhenRetrievingApiLinks(t *testing.T) {
 	// given the expected environment variable exists
 	defer restoreGetEnvFunc()
@@ -42,7 +168,7 @@ func Test_NewClient_ShouldSendAuthorizationHeaderWhenRetrievingApiLinks(t *testi
 	setEnv(config.FlyteJWTEnvName, "a.jwt.token")
 
 	// and we have a running server set to respond with flyte api links
-	ts, rec := mockServerWithRecorder(http.StatusCreated, flyteApiLinksResponse)
+	ts, rec := mockHttpServerWithRecorder(http.StatusCreated, flyteApiLinksResponse)
 	defer ts.Close()
 
 	// when we create a new client
@@ -56,7 +182,7 @@ func Test_NewClient_ShouldSendAuthorizationHeaderWhenRetrievingApiLinks(t *testi
 
 func Test_NewClient_ShouldNotSendAuthorizationHeaderWhenRetrievingApiLinks(t *testing.T) {
 	// given the jwt environment variable does not exist and we have a running server set to respond with flyte api links
-	ts, rec := mockServerWithRecorder(http.StatusCreated, flyteApiLinksResponse)
+	ts, rec := mockHttpServerWithRecorder(http.StatusCreated, flyteApiLinksResponse)
 	defer ts.Close()
 
 	// when we create a new client
@@ -156,7 +282,7 @@ CreatePack tests
 
 func Test_CreatePack_ShouldSendAuthorizationHeaderWhenRegisteringPack(t *testing.T) {
 	// given we have a running server set to respond with a pack json
-	ts, rec := mockServerWithRecorder(http.StatusCreated, slackPackResponse)
+	ts, rec := mockHttpServerWithRecorder(http.StatusCreated, slackPackResponse)
 	defer ts.Close()
 
 	// and the jwt environment variable exists
@@ -179,7 +305,7 @@ func Test_CreatePack_ShouldSendAuthorizationHeaderWhenRegisteringPack(t *testing
 
 func Test_CreatePack_ShouldNotSendAuthorizationHeaderWhenRegisteringPack(t *testing.T) {
 	// given we have a running server set to respond with a pack json
-	ts, rec := mockServerWithRecorder(http.StatusCreated, slackPackResponse)
+	ts, rec := mockHttpServerWithRecorder(http.StatusCreated, slackPackResponse)
 	defer ts.Close()
 
 	// and a client without the token set
@@ -195,7 +321,7 @@ func Test_CreatePack_ShouldNotSendAuthorizationHeaderWhenRegisteringPack(t *test
 }
 
 func Test_CreatePack_ShouldRegisterPackWithApiAndPopulateClientWithLinks(t *testing.T) {
-	ts, rec := mockServerWithRecorder(http.StatusCreated, slackPackResponse)
+	ts, rec := mockHttpServerWithRecorder(http.StatusCreated, slackPackResponse)
 	defer ts.Close()
 
 	c := newTestClient(ts.URL, t)
@@ -301,7 +427,7 @@ PostEvent tests
 
 func Test_PostEvent_ShouldSendAuthorizationHeader(t *testing.T) {
 	// given we have a running server
-	ts, rec := mockServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
+	ts, rec := mockHttpServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
 	defer ts.Close()
 
 	// and the jwt environment variable exists
@@ -328,7 +454,7 @@ func Test_PostEvent_ShouldSendAuthorizationHeader(t *testing.T) {
 
 func Test_PostEvent_ShouldNotSendAuthorizationHeader(t *testing.T) {
 	// given we have a running server
-	ts, rec := mockServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
+	ts, rec := mockHttpServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
 	defer ts.Close()
 
 	// and a client without the token set
@@ -353,7 +479,7 @@ TakeAction tests
 
 func Test_TakeAction_ShouldSendAuthorizationHeader(t *testing.T) {
 	// given we have a running server
-	ts, rec := mockServerWithRecorder(http.StatusOK, `{"some":"response"}`)
+	ts, rec := mockHttpServerWithRecorder(http.StatusOK, `{"some":"response"}`)
 	defer ts.Close()
 
 	// and the jwt environment variable exists
@@ -380,7 +506,7 @@ func Test_TakeAction_ShouldSendAuthorizationHeader(t *testing.T) {
 
 func Test_TakeAction_ShouldNotSendAuthorizationHeader(t *testing.T) {
 	// given we have a running server
-	ts, rec := mockServerWithRecorder(http.StatusOK, `{"some":"response"}`)
+	ts, rec := mockHttpServerWithRecorder(http.StatusOK, `{"some":"response"}`)
 	defer ts.Close()
 
 	// and a client without the token set
@@ -420,7 +546,7 @@ func Test_TakeAction_ShouldReturnSpecificErrorTypeAndMessageWhenResourceIsNotFou
 
 func Test_CompleteAction_ShouldSendAuthorizationHeader(t *testing.T) {
 	// given we have a running server
-	ts, rec := mockServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
+	ts, rec := mockHttpServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
 	defer ts.Close()
 
 	// and the jwt environment variable exists
@@ -447,7 +573,7 @@ func Test_CompleteAction_ShouldSendAuthorizationHeader(t *testing.T) {
 
 func Test_CompleteAction_ShouldNotSendAuthorizationHeader(t *testing.T) {
 	// given we have a running server
-	ts, rec := mockServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
+	ts, rec := mockHttpServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
 	defer ts.Close()
 
 	// and a client without the token set
@@ -594,11 +720,15 @@ var slackPackResponseWithNoEventsLinks = `
 `
 
 func mockServer(status int, body string) *httptest.Server {
-	ts, _ := mockServerWithRecorder(status, body)
+	ts, _ := mockHttpServerWithRecorder(status, body)
 	return ts
 }
 
-func mockServerWithRecorder(status int, body string) (*httptest.Server, *requestsRec) {
+func mockHttpServerWithRecorder(status int, body string) (*httptest.Server, *requestsRec) {
+	return mockServerWithRecorder(status, body, httptest.NewServer)
+}
+
+func mockServerWithRecorder(status int, body string, newServer func(http.Handler) *httptest.Server) (*httptest.Server, *requestsRec) {
 	rec := &requestsRec{
 		reqs: []*http.Request{},
 	}
@@ -608,7 +738,11 @@ func mockServerWithRecorder(status int, body string) (*httptest.Server, *request
 		w.WriteHeader(status)
 		w.Write([]byte(body))
 	}
-	return httptest.NewServer(http.HandlerFunc(handler)), rec
+	return newServer(http.HandlerFunc(handler)), rec
+}
+
+func mockTLSServerWithRecorder(status int, body string) (*httptest.Server, *requestsRec) {
+	return mockServerWithRecorder(status, body, httptest.NewTLSServer)
 }
 
 func newTestClient(serverURL string, t *testing.T) *client {
@@ -650,4 +784,49 @@ func setEnv(name, value string) {
 
 func clearEnv() {
 	envvars = map[string]string{}
+}
+
+func caTemplate() (*x509.Certificate, error) {
+	// generate a random serial number (a real cert authority would have some logic behind this)
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to generate serial number")
+	}
+
+	tmpl := x509.Certificate{
+		SerialNumber:          serialNumber,
+		Subject:               pkix.Name{Organization: []string{"Hotels.com"}},
+		SignatureAlgorithm:    x509.SHA256WithRSA,
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Hour),
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		IPAddresses:           []net.IP{net.ParseIP("127.0.0.1")},
+	}
+	return &tmpl, nil
+}
+
+func createCAPemCert() ([]byte, error) {
+	rootKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a certificate authority template with a serial number and other required fields
+	template, err := caTemplate()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create cert template")
+	}
+
+	certDER, err := x509.CreateCertificate(rand.Reader, template, template, &rootKey.PublicKey, rootKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create certificate")
+	}
+
+	// PEM encode the certificate (this is a standard TLS encoding)
+	b := pem.Block{Type: "CERTIFICATE", Bytes: certDER}
+	return pem.EncodeToMemory(&b), nil
 }

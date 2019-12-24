@@ -29,6 +29,7 @@ const (
 	apiTimeoutOutDefault   = time.Second * 10
 	flyteApiEnvName        = "FLYTE_API"
 	FlyteJWTEnvName        = "FLYTE_JWT"
+	FlyteCACertFileEnvName = "FLYTE_CA_CERT_FILE"
 	flyteLabelsEnvName     = "FLYTE_LABELS"
 	flyteApiTimeOutEnvName = "FLYTE_API_TIMEOUT"
 )
@@ -110,4 +111,12 @@ func GetJWT() string {
 		logger.Infof("%s environment variable is set.", FlyteJWTEnvName)
 	}
 	return jwt
+}
+
+func GetCustomCAFile() string {
+	ca := GetEnv(FlyteCACertFileEnvName)
+	if ca != "" {
+		logger.Infof("%s environment variable is set.", FlyteCACertFileEnvName)
+	}
+	return ca
 }

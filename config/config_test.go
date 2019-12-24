@@ -220,3 +220,21 @@ func TestShouldNotGetJWTFromEnvironment(t *testing.T) {
 
 	assert.Equal(t, "", GetJWT())
 }
+
+func TestGetCustomCAFileReturnsEnvVarValue(t *testing.T) {
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+
+	setEnv(FlyteCACertFileEnvName, "/folder/ca.cert")
+
+	assert.Equal(t, "/folder/ca.cert", GetCustomCAFile())
+}
+
+func TestGetCustomCAFileReturnsEmptyWhenEnvVarNotSet(t *testing.T) {
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+
+	assert.Equal(t, "", GetCustomCAFile())
+}

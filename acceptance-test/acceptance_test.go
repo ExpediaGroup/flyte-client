@@ -39,20 +39,17 @@ var suite = []FeatureFile{
 }
 
 func TestFeatures(t *testing.T) {
-	var mng *Mongo
-	var flyte *Flyte
-	var err error
-	defer tearDown(flyte, mng)
-
-	mng, err = StartMongo()
+	mng, err := StartMongo()
 	if err != nil {
 		logger.Fatalf("Unable to start mongo: %s", err.Error())
 	}
+	defer tearDownMongo(mng)
 
-	flyte, err = StartFlyte(*mng)
+	flyte, err := StartFlyte(*mng)
 	if err != nil {
 		logger.Fatalf("Unable to start flyte: %s", err.Error())
 	}
+	defer tearDownFlyte(flyte)
 
 	for _, feature := range suite {
 		t.Run(feature.name, func(t *testing.T) {
@@ -60,19 +57,17 @@ func TestFeatures(t *testing.T) {
 				t.Run(test.name, test.testFunc)
 			}
 		})
-
 	}
 }
 
-func tearDown(flyte *Flyte, mongo *Mongo) {
-	if flyte != nil {
-		if err := flyte.Stop(); err != nil {
-			logger.Errorf("unable to stop flyte api")
-		}
+func tearDownFlyte(flyte *Flyte) {
+	if err := flyte.Stop(); err != nil {
+		logger.Errorf("unable to stop flyte api: %v", err)
 	}
-	if mongo != nil {
-		if err := mongo.Stop(); err != nil {
-			logger.Errorf("unable to stop mongo")
-		}
+}
+
+func tearDownMongo(mongo *Mongo) {
+	if err := mongo.Stop(); err != nil {
+		logger.Errorf("unable to stop mongo: %v", err)
 	}
 }
