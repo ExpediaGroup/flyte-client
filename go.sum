@@ -2,7 +2,9 @@ github.com/HotelsDotCom/go-docker-client v0.0.0-20180417151408-74565f62571c h1:g
 github.com/HotelsDotCom/go-docker-client v0.0.0-20180417151408-74565f62571c/go.mod h1:lrrhb1l2sRDhimivJfB3rqwofV3ujEYIxyI6Wthb6qc=
 github.com/HotelsDotCom/go-logger v0.0.0-20180418132526-7ad81ddd2dfc h1:BDSMzYGj8GgS3Vim3axCzDvc3OryaMls3iFL2QWFBQw=
 github.com/HotelsDotCom/go-logger v0.0.0-20180418132526-7ad81ddd2dfc/go.mod h1:rvobSJoTaXXfnosmzN6/TT7EGplWZoZZB2GSO1xGG9g=
+github.com/Microsoft/go-winio v0.4.7 h1:vOvDiY/F1avSWlCWiKJjdYKz2jVjTK3pWPHndeG4OAY=
 github.com/Microsoft/go-winio v0.4.7/go.mod h1:VhR8bwka0BXejwEJY73c50VrPtXAaKcyvVC4A4RozmA=
+github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/docker/distribution v2.6.2+incompatible h1:4FI6af79dfCS/CYb+RRtkSHw3q1L/bnDjG1PcPZtQhM=
 github.com/docker/distribution v2.6.2+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
@@ -14,9 +16,13 @@ github.com/docker/go-units v0.3.3 h1:Xk8S3Xj5sLGlG5g67hJmYMmUgXv5N4PhkjJHHqrwnTk
 github.com/docker/go-units v0.3.3/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/pkg/errors v0.8.0 h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/stevvooe/resumable v0.0.0-20180830230917-22b14a53ba50 h1:4bT0pPowCpQImewr+BjzfUKcuFW+KVyB8d1OF3b6oTI=
+github.com/stevvooe/resumable v0.0.0-20180830230917-22b14a53ba50/go.mod h1:1pdIZTAHUz+HDKDVZ++5xg/duPlhKAIzw9qy42CWYp4=
 github.com/stretchr/testify v1.2.1 h1:52QO5WkIUcHGIR7EnGagH88x1bUzqGXTC5/1bDTUQ7U=
 github.com/stretchr/testify v1.2.1/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 golang.org/x/net v0.0.0-20180418062111-d41e8174641f h1:tjcOs1O1Wx/iE6xMt3j3HE6+OUjdqiwvSpcgM5YjGRk=
 golang.org/x/net v0.0.0-20180418062111-d41e8174641f/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
+golang.org/x/sys v0.0.0-20180418212419-3ccc7e577979 h1:QXKsWyZDeea6uG1DcvsBbDE10dokQULIwN56Vhf5DO4=
 golang.org/x/sys v0.0.0-20180418212419-3ccc7e577979/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
