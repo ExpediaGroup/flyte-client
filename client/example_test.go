@@ -17,8 +17,8 @@ limitations under the License.
 package client_test
 
 import (
-	"github.com/HotelsDotCom/flyte-client/client"
-	"github.com/HotelsDotCom/flyte-client/flyte"
+	"github.com/ExpediaGroup/flyte-client/client"
+	"github.com/ExpediaGroup/flyte-client/flyte"
 	"net/url"
 	"time"
 )

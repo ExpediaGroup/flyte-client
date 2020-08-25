@@ -20,7 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/HotelsDotCom/flyte-client/client"
+	"github.com/ExpediaGroup/flyte-client/client"
 	"net/http"
 	"net/url"
 	"path"

@@ -20,8 +20,8 @@ package flyte
 
 import (
 	"encoding/json"
-	"github.com/HotelsDotCom/flyte-client/client"
-	"github.com/HotelsDotCom/flyte-client/healthcheck"
+	"github.com/ExpediaGroup/flyte-client/client"
+	"github.com/ExpediaGroup/flyte-client/healthcheck"
 	"github.com/HotelsDotCom/go-logger"
 	"net/url"
 	"time"

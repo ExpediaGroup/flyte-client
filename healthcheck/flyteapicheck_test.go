@@ -2,7 +2,7 @@ package healthcheck
 
 import (
 	"errors"
-	"github.com/HotelsDotCom/flyte-client/client"
+	"github.com/ExpediaGroup/flyte-client/client"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"

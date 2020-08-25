@@ -23,7 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/HotelsDotCom/flyte-client/config"
+	"github.com/ExpediaGroup/flyte-client/config"
 	"github.com/HotelsDotCom/go-logger"
 	"net/http"
 	"net/url"

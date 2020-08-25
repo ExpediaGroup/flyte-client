@@ -1,6 +1,6 @@
 # flyte-client
 
-[![Build Status](https://travis-ci.org/HotelsDotCom/flyte-client.svg?branch=master)](https://travis-ci.org/HotelsDotCom/flyte-client)
+[![Build Status](https://travis-ci.org/ExpediaGroup/flyte-client.svg?branch=master)](https://travis-ci.org/ExpediaGroup/flyte-client)
 
 flyte-client is a Go library designed to make the writing of flyte packs simple. 
 The client handles the registration of a pack with the flyte server, consuming and handling command actions, and gives the ability to send
@@ -11,12 +11,12 @@ pack events to the flyte server. This allows the pack writer to concentrate sole
 
 ## Install
 ```
-go get github.com/HotelsDotCom/flyte-client
+go get github.com/ExpediaGroup/flyte-client
 ```
 
 ## Usage
 ```
-import "github.com/HotelsDotCom/flyte-client"
+import "github.com/ExpediaGroup/flyte-client"
 ```
 
 * Clone this repo
@@ -33,7 +33,7 @@ The Go docs can be found at:
 # start godoc server
 godoc -http=:6060
 # navigate to
-http://localhost:6060/pkg/github.com/HotelsDotCom/flyte-client
+http://localhost:6060/pkg/github.com/ExpediaGroup/flyte-client
 ```
 
 #### Structs
@@ -176,9 +176,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/url"
-	"github.com/HotelsDotCom/flyte-client/client"
-	"github.com/HotelsDotCom/flyte-client/flyte"
-	"github.com/HotelsDotCom/flyte-client/healthcheck"
+	"github.com/ExpediaGroup/flyte-client/client"
+	"github.com/ExpediaGroup/flyte-client/flyte"
+	"github.com/ExpediaGroup/flyte-client/healthcheck"
 	"time"
 )
 

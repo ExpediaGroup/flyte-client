@@ -19,8 +19,8 @@ package flyte_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/HotelsDotCom/flyte-client/client"
-	"github.com/HotelsDotCom/flyte-client/flyte"
+	"github.com/ExpediaGroup/flyte-client/client"
+	"github.com/ExpediaGroup/flyte-client/flyte"
 	"net/url"
 	"time"
 )

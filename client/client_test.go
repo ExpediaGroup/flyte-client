@@ -19,7 +19,7 @@ package client
 import (
 	"bytes"
 	"fmt"
-	"github.com/HotelsDotCom/flyte-client/config"
+	"github.com/ExpediaGroup/flyte-client/config"
 	"github.com/HotelsDotCom/go-logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

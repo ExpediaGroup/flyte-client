@@ -18,7 +18,7 @@ package flyte
 
 import (
 	"fmt"
-	"github.com/HotelsDotCom/flyte-client/client"
+	"github.com/ExpediaGroup/flyte-client/client"
 	"github.com/HotelsDotCom/go-logger"
 	"time"
 )

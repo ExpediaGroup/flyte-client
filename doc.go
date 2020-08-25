@@ -130,9 +130,9 @@ If this command succeeds it returns an "IssueCreated" event, if it fails it retu
       "encoding/json"
       "log"
       "net/url"
-      "github.com/HotelsDotCom/flyte-client/client"
-      "github.com/HotelsDotCom/flyte-client/flyte"
-      "github.com/HotelsDotCom/flyte-client/healthcheck"
+      "github.com/ExpediaGroup/flyte-client/client"
+      "github.com/ExpediaGroup/flyte-client/flyte"
+      "github.com/ExpediaGroup/flyte-client/healthcheck"
       "time"
   )
 
