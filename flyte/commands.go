@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/ExpediaGroup/flyte-client/client"
 	"github.com/HotelsDotCom/go-logger"
+	"strings"
 	"time"
 )
 
@@ -57,7 +58,9 @@ func (p pack) getNextAction() *client.Action {
 			if _, ok := err.(client.NotFoundError); ok {
 				logger.Fatal("Pack not found while polling for actions. Exiting.")
 			}
-			logger.Infof("could not take action: %s", err)
+			if !strings.HasSuffix(strings.TrimSpace(err.Error()), "EOF") {
+				logger.Infof("could not take action: %s", err)
+			}
 		}
 		if a == nil || err != nil {
 			time.Sleep(p.pollingFrequency)
