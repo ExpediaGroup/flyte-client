@@ -23,6 +23,9 @@ import (
 	"testing"
 )
 
+var mng *Mongo
+var flt *Flyte
+
 type FeatureFile struct {
 	name  string
 	tests []Test
@@ -39,17 +42,15 @@ var suite = []FeatureFile{
 }
 
 func TestFeatures(t *testing.T) {
-	var mng *Mongo
-	var flyte *Flyte
 	var err error
-	defer tearDown(flyte, mng)
+	defer tearDown()
 
 	mng, err = StartMongo()
 	if err != nil {
 		logger.Fatalf("Unable to start mongo: %s", err.Error())
 	}
 
-	flyte, err = StartFlyte(*mng)
+	flt, err = StartFlyte(*mng)
 	if err != nil {
 		logger.Fatalf("Unable to start flyte: %s", err.Error())
 	}
@@ -64,14 +65,14 @@ func TestFeatures(t *testing.T) {
 	}
 }
 
-func tearDown(flyte *Flyte, mongo *Mongo) {
-	if flyte != nil {
-		if err := flyte.Stop(); err != nil {
+func tearDown() {
+	if flt != nil {
+		if err := flt.Stop(); err != nil {
 			logger.Errorf("unable to stop flyte api")
 		}
 	}
-	if mongo != nil {
-		if err := mongo.Stop(); err != nil {
+	if mng != nil {
+		if err := mng.Stop(); err != nil {
 			logger.Errorf("unable to stop mongo")
 		}
 	}

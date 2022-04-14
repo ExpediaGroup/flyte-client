@@ -18,11 +18,13 @@ package client
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/ExpediaGroup/flyte-client/config"
 	"github.com/HotelsDotCom/go-logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -298,6 +300,42 @@ func Test_CreatePack_ShouldReturnErrorIfResponseCannotBeDecoded(t *testing.T) {
 /**
 PostEvent tests
 */
+
+func Test_PostEvent_ShouldPostEvent(t *testing.T) {
+	// given we have a running server
+	ts, rec := mockServerWithRecorder(http.StatusAccepted, `{"some":"response"}`)
+	defer ts.Close()
+
+	// and the jwt environment variable exists
+	defer restoreGetEnvFunc()
+	defer clearEnv()
+	initTestEnv()
+
+	// and a client
+	c := newTestClient(ts.URL, t)
+
+	// and an events url set
+	u, _ := url.Parse(fmt.Sprintf("%s/v1/packs/Slack/events", ts.URL))
+	c.eventsURL = u
+
+	// when
+	want := Event{Name: "Dave", Payload: `{"some":"thing"}`}
+	beforePost := time.Now()
+	err := c.PostEvent(want)
+
+	// then
+	require.NoError(t, err)
+	require.NotEmpty(t, rec.reqs, "A http request must be set!")
+	require.NotEmpty(t, rec.body, "A body must be set!")
+	var got Event
+	require.NoError(t, json.Unmarshal(rec.body[0], &got))
+
+	want.CreatedAt = got.CreatedAt
+
+	assert.Equal(t, want, got)
+	assert.True(t, time.Now().After(want.CreatedAt))
+	assert.True(t, beforePost.Before(want.CreatedAt))
+}
 
 func Test_PostEvent_ShouldSendAuthorizationHeader(t *testing.T) {
 	// given we have a running server
@@ -623,10 +661,13 @@ func newTestClient(serverURL string, t *testing.T) *client {
 
 type requestsRec struct {
 	reqs []*http.Request
+	body [][]byte
 }
 
 func (rr *requestsRec) add(r *http.Request) {
 	rr.reqs = append(rr.reqs, r)
+	b, _ := ioutil.ReadAll(r.Body)
+	rr.body = append(rr.body, b)
 }
 
 // environment variable help

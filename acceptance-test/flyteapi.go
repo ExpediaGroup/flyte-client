@@ -28,7 +28,7 @@ import (
 var flyteApiUrl string
 
 const (
-	defaultFlyteApiImage = "hotelsdotcom/flyte:1.81"
+	defaultFlyteApiImage = "expediagroup/flyte:1.4"
 )
 
 type Flyte struct {
