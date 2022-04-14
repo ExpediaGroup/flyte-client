@@ -19,6 +19,7 @@ package client
 import (
 	"encoding/json"
 	"net/url"
+	"time"
 )
 
 // the client Pack struct is used when registering with the flyte api.
@@ -79,6 +80,7 @@ func (l *Link) UnmarshalJSON(data []byte) error {
 type Event struct {
 	Name    string      `json:"event"`
 	Payload interface{} `json:"payload"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Action struct {

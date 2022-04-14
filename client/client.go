@@ -183,6 +183,7 @@ func (c *client) GetFlyteHealthCheckURL() (*url.URL, error) {
 
 // PostEvent posts events to the flyte server
 func (c client) PostEvent(event Event) error {
+	event.CreatedAt = time.Now()
 	if c.eventsURL == nil {
 		return errors.New("eventsURL not initialised - you must post a pack def first")
 	}
