@@ -287,15 +287,3 @@ To run just the unit tests use:
 ```
 go test ./...
 ```
-
-To run all tests, then use:
-
-```
-go test ./... -tags=acceptance
-```
-
-If you want to provide a custom Flyte-API image to run tests against, set the environment variable FLYTE_API_IMAGE. E.g:
-```
-export FLYTE_API_IMAGE=flyte:test
-```
-If this value is not set, it will default to a predefined value found in `acceptance-test/flyteapi.go`, as `flyteApiDefaultImage`.

@@ -24,7 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ExpediaGroup/flyte-client/config"
-	"github.com/HotelsDotCom/go-logger"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"net/url"
 	"path"
@@ -55,8 +55,11 @@ type client struct {
 
 const (
 	ApiVersion        = "v1"
+)
+var (
 	flyteApiRetryWait = 3 * time.Second
 )
+
 
 // To create a new client, please provide the url of the flyte server and the timeout.
 // timeout specifies a time limit for requests made by this
@@ -119,7 +122,7 @@ func (c *client) getApiLinks() {
 	var links map[string][]Link
 
 	if err := c.getStruct(c.baseURL, &links); err != nil {
-		logger.Errorf("cannot get api links: '%v'", err)
+		log.Err(err).Msg("cannot get api links")
 		time.Sleep(flyteApiRetryWait)
 		c.getApiLinks()
 		return

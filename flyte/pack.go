@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"github.com/ExpediaGroup/flyte-client/client"
 	"github.com/ExpediaGroup/flyte-client/healthcheck"
-	"github.com/HotelsDotCom/go-logger"
+	"github.com/rs/zerolog/log"
 	"net/url"
 	"time"
 )
@@ -77,7 +77,7 @@ func addDefaultHealthCheckIfNoneExist(healthChecks []healthcheck.HealthCheck) []
 // This will also start up a pack health check server.
 func (p pack) Start() {
 	if err := p.register(); err != nil {
-		logger.Errorf("cannot register pack: %v", err)
+		log.Err(err).Msg("cannot register pack")
 		time.Sleep(registerRetryWait)
 		p.Start()
 		return
