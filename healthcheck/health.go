@@ -19,7 +19,7 @@ package healthcheck
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/HotelsDotCom/go-logger"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"time"
 )
@@ -38,11 +38,11 @@ type HealthCheck func() (name string, health Health)
 // Start will take the health checks you provide and start a web server to handle them.
 func Start(healthChecks []HealthCheck) *http.Server {
 	srv := &http.Server{Addr: fmt.Sprintf(":%s", Port)}
-	logger.Infof("starting healthcheck server on port %s", Port)
+	log.Info().Msgf("starting healthcheck server on port %s", Port)
 	http.HandleFunc("/", handler(healthChecks))
 	go func(s *http.Server) {
 		if err := s.ListenAndServe(); err != nil {
-			logger.Errorf("Healthcheck: ListenAndServe: %v", err)
+			log.Err(err).Send()
 		}
 	}(srv)
 	time.Sleep(3 * time.Millisecond)
@@ -56,7 +56,7 @@ func Start(healthChecks []HealthCheck) *http.Server {
 func handler(healthChecks []HealthCheck) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		if len(healthChecks) == 0 {
-			logger.Info("no healthchecks registered")
+			log.Info().Msg("no healthchecks registered")
 			w.WriteHeader(http.StatusOK)
 			return
 		}
@@ -71,7 +71,7 @@ func handler(healthChecks []HealthCheck) func(w http.ResponseWriter, r *http.Req
 
 		jsonResponse, err := json.Marshal(healthCheckResults)
 		if err != nil {
-			logger.Errorf("json marshalling error. healthCheckResults: %+v. error: %s", healthCheckResults, err.Error())
+			log.Err(err).Msgf("json marshalling error. healthCheckResults: %+v", healthCheckResults)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

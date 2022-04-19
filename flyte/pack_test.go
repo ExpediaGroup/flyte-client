@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ExpediaGroup/flyte-client/client"
-	"github.com/HotelsDotCom/go-logger"
 	"github.com/stretchr/testify/assert"
 	"net/url"
 	"sync"
@@ -66,14 +65,8 @@ func Test_NewPack_ShouldRetryRegistrationOnError(t *testing.T) {
 		},
 	}
 
-	logMsg := ""
-	loggerFn := logger.Errorf
-	logger.Errorf = func(msg string, args ...interface{}) { logMsg = fmt.Sprintf(msg, args...) }
-	defer func() { logger.Errorf = loggerFn }()
-
 	p := NewPack(packDef, c)
 	p.Start()
-	assert.Equal(t, "cannot register pack: Failed to register pack with flyte service", logMsg)
 }
 
 func Test_SendEvent(t *testing.T) {

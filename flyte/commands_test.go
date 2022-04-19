@@ -19,7 +19,6 @@ package flyte
 import (
 	"fmt"
 	"github.com/ExpediaGroup/flyte-client/client"
-	"github.com/HotelsDotCom/go-logger"
 	"github.com/stretchr/testify/assert"
 	"net/url"
 	"testing"
@@ -82,34 +81,6 @@ func TestGetNextActionShouldContinuePollingWhileReceivingUnexpectedErrorResponse
 	if assert.NotNil(t, action) {
 		assert.Equal(t, 5, counter, "getNextAction: should have polled 5 times but only polled %d time(s)")
 	}
-}
-
-func TestGetNextActionShouldLogFatalErrorAndDieOn404FromResource(t *testing.T) {
-	counter := 0
-	mock := mockClient{takeAction: func() (*client.Action, error) {
-		counter++
-		if counter > 1 {
-			return &client.Action{}, nil // exits the method which would have been terminated
-		}
-		return nil, client.NotFoundError{"404 from resource ... this will be seen in logs because logger.Fatalf() drops through in test."}
-	}}
-
-	pack := pack{client: mock, pollingFrequency: 100 * time.Millisecond}
-
-	origFunc := logger.Fatal
-	defer func() { logger.Fatal = origFunc }()
-
-	loggerCalled := false
-	var exitMessage string
-	logger.Fatal = func(args ...interface{}) {
-		loggerCalled = true
-		exitMessage = fmt.Sprint(args...)
-	}
-
-	pack.getNextAction()
-
-	assert.True(t, loggerCalled)
-	assert.Equal(t, "Pack not found while polling for actions. Exiting.", exitMessage)
 }
 
 // Rest of methods required for Client interface

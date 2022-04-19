@@ -19,7 +19,7 @@ package flyte
 import (
 	"fmt"
 	"github.com/ExpediaGroup/flyte-client/client"
-	"github.com/HotelsDotCom/go-logger"
+	"github.com/rs/zerolog/log"
 	"time"
 )
 
@@ -55,9 +55,9 @@ func (p pack) getNextAction() *client.Action {
 		a, err := p.client.TakeAction()
 		if err != nil {
 			if _, ok := err.(client.NotFoundError); ok {
-				logger.Fatal("Pack not found while polling for actions. Exiting.")
+				log.Fatal().Msg("Pack not found while polling for actions. Exiting.")
 			}
-			logger.Infof("could not take action: %s", err)
+			log.Err(err).Msg("could not take action")
 		}
 		if a == nil || err != nil {
 			time.Sleep(p.pollingFrequency)
@@ -77,7 +77,7 @@ func (p pack) handleAction(a *client.Action, handlers map[string]CommandHandler)
 	if !ok {
 		err := fmt.Errorf("no handler could be found for command %q in %v", a.CommandName, handlers)
 		p.completeAction(a, NewFatalEvent(err.Error()))
-		logger.Error(err)
+		log.Err(err).Send()
 		return
 	}
 
@@ -90,7 +90,7 @@ func (p pack) handleAction(a *client.Action, handlers map[string]CommandHandler)
 func (p pack) handlePanic(a *client.Action) {
 	if r := recover(); r != nil {
 		p.completeAction(a, NewFatalEvent(fmt.Sprintf("%v", r)))
-		logger.Errorf("command handler for %q raised a panic: %s", a.CommandName, r)
+		log.Error().Msgf("command handler for %q raised a panic: %s", a.CommandName, r)
 	}
 }
 
@@ -101,6 +101,6 @@ func (p pack) completeAction(a *client.Action, event Event) {
 		Payload: event.Payload,
 	}
 	if err := p.client.CompleteAction(*a, e); err != nil {
-		logger.Errorf("could not complete action %+v with event %+v: %s", a, e, err)
+		log.Err(err).Msgf("could not complete action %+v with event %+v", a, e)
 	}
 }

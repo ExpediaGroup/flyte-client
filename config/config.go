@@ -17,7 +17,7 @@ limitations under the License.
 package config
 
 import (
-	"github.com/HotelsDotCom/go-logger"
+	"github.com/rs/zerolog/log"
 	"net/url"
 	"os"
 	"strconv"
@@ -50,12 +50,12 @@ func FromEnvironment() Values {
 func getFlyteApiUrl() *url.URL {
 	apiEnvUrl := GetEnv(flyteApiEnvName)
 	if apiEnvUrl == "" {
-		logger.Fatalf("%s environment variable is not set", flyteApiEnvName)
+		log.Fatal().Msgf("%s environment variable is not set", flyteApiEnvName)
 	}
 
 	flyteApiUrl, err := url.Parse(apiEnvUrl)
 	if err != nil {
-		logger.Fatalf("%s environment variable is not set to a valid URL: %v", flyteApiEnvName, err)
+		log.Fatal().Err(err).Msgf("%s environment variable is not set to a valid URL", flyteApiEnvName)
 	}
 
 	return flyteApiUrl
@@ -67,7 +67,7 @@ func getLabels() (labels map[string]string) {
 	labels = make(map[string]string)
 
 	if labelsString == "" {
-		logger.Infof("%s environment variable is not set", flyteLabelsEnvName)
+		log.Info().Msgf("%s environment variable is not set", flyteLabelsEnvName)
 		return labels
 	}
 
@@ -75,7 +75,7 @@ func getLabels() (labels map[string]string) {
 	for _, label := range strings.Split(labelsString, ",") {
 		items := strings.SplitN(label, "=", 2)
 		if len(items) != 2 {
-			logger.Fatalf("invalid format of %s environment variable: %v", flyteLabelsEnvName, labelsString)
+			log.Fatal().Msgf("invalid format of %s environment variable: %v", flyteLabelsEnvName, labelsString)
 		}
 		labels[strings.TrimSpace(items[0])] = strings.TrimSpace(items[1])
 	}
@@ -88,17 +88,17 @@ func getApiTimeOut() time.Duration {
 	apiTimeOut := GetEnv(flyteApiTimeOutEnvName)
 
 	if apiTimeOut == "" {
-		logger.Infof("FLYTE_API_TIMEOUT environment variable is not set, setting to default of %v", apiTimeoutOutDefault)
+		log.Info().Msgf("FLYTE_API_TIMEOUT environment variable is not set, setting to default of %v", apiTimeoutOutDefault)
 		return apiTimeoutOutDefault
 	}
 
 	apiTimeOutInt, err := strconv.Atoi(apiTimeOut)
 	if err != nil {
-		logger.Fatalf("%s is an invalid integer value: %v", flyteApiTimeOutEnvName, err)
+		log.Fatal().Err(err).Msgf("%s is an invalid integer value", flyteApiTimeOutEnvName)
 	}
 
 	if apiTimeOutInt < 0 {
-		logger.Fatalf("%s has been set to an invalid value: %v", flyteApiTimeOutEnvName, apiTimeOutInt)
+		log.Fatal().Msgf("%s has been set to an invalid value: %v", flyteApiTimeOutEnvName, apiTimeOutInt)
 	}
 
 	return time.Second * time.Duration(apiTimeOutInt)
@@ -107,7 +107,7 @@ func getApiTimeOut() time.Duration {
 func GetJWT() string {
 	jwt := GetEnv(FlyteJWTEnvName)
 	if jwt != "" {
-		logger.Infof("%s environment variable is set.", FlyteJWTEnvName)
+		log.Info().Msgf("%s environment variable is set.", FlyteJWTEnvName)
 	}
 	return jwt
 }

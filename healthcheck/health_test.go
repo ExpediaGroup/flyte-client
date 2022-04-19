@@ -17,7 +17,6 @@ limitations under the License.
 package healthcheck
 
 import (
-	"github.com/HotelsDotCom/go-logger/loggertest"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -50,9 +49,6 @@ func TestHealthCheck_shouldReturn200AndLogMessage_whenNoHealthChecksAreRegistere
 	// given there are no healthchecks registered
 	healthChecks := []HealthCheck{}
 
-	defer loggertest.Reset()
-	loggertest.Init(loggertest.LogLevelInfo)
-
 	request := httptest.NewRequest("GET", "/", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -61,7 +57,6 @@ func TestHealthCheck_shouldReturn200AndLogMessage_whenNoHealthChecksAreRegistere
 
 	// then
 	assert.Equal(t, http.StatusOK, responseWriter.Code)
-	assert.Equal(t, "no healthchecks registered", loggertest.GetLogMessages()[0].Message)
 }
 
 func TestHealthCheck_shouldReturn500AndValidJsonResponse_whenAHealthCheckFails(t *testing.T) {
@@ -102,24 +97,4 @@ func TestHealthCheck_shouldReturn500HeaderResponse_whenJsonMarshallingError(t *t
 	// then
 	assert.Equal(t, http.StatusInternalServerError, responseWriter.Code)
 	assert.Equal(t, "application/json; charset=utf-8", responseWriter.Header().Get("Content-Type"))
-}
-
-func TestHealthCheck_shouldLogMessage_whenJsonMarshallingError(t *testing.T) {
-	// given these healthchecks - that will return invalid JSON
-	endPointCheck := func() (name string, health Health) {
-		return "EndPointCheck", Health{Healthy: true, Status: func() {}}
-	}
-	healthChecks := []HealthCheck{endPointCheck}
-
-	defer loggertest.Reset()
-	loggertest.Init(loggertest.LogLevelError)
-
-	// when the healthcheck on the pack is called
-	handler(healthChecks)(httptest.NewRecorder(), httptest.NewRequest("GET", "/", nil))
-
-	// then
-	logMessages := loggertest.GetLogMessages()
-
-	assert.Contains(t, logMessages[0].Message, "json marshalling error. healthCheckResults: map[EndPointCheck:{Healthy:true Status:")
-	assert.Contains(t, logMessages[0].Message, "}]. error: json: unsupported type: func()")
 }

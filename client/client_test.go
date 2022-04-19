@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ExpediaGroup/flyte-client/config"
-	"github.com/HotelsDotCom/go-logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -72,6 +71,9 @@ func Test_NewClient_ShouldNotSendAuthorizationHeaderWhenRetrievingApiLinks(t *te
 
 func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 	// given the mock flyte-api will first return an error response getting api links...then after retrying will return the expected response
+	prevFlyteApiRetryWait := flyteApiRetryWait
+	defer func() {flyteApiRetryWait = prevFlyteApiRetryWait}()
+	flyteApiRetryWait = 0
 	apiLinksFailCount := 1
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		if apiLinksFailCount > 0 {
@@ -84,19 +86,11 @@ func Test_NewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	// and code to record the log message/s
-	logMsg := ""
-	loggerFn := logger.Errorf
-	logger.Errorf = func(msg string, args ...interface{}) { logMsg = fmt.Sprintf(msg, args...) }
-	defer func() { logger.Errorf = loggerFn }()
-
 	baseUrl, _ := url.Parse(server.URL)
 
 	// when
 	client := NewClient(baseUrl, 10*time.Second)
 
-	// then a log error message will have been recorded...
-	assert.Contains(t, logMsg, "cannot get api links:")
 	// ...but the links are available after the retry
 	healthCheckURL, _ := client.GetFlyteHealthCheckURL()
 	assert.Equal(t, "http://example.com/v1/health", healthCheckURL.String())
@@ -121,6 +115,9 @@ func Test_InsecureNewClient_ShouldNotLogFatalWhenJWTIsNotProvided(t *testing.T) 
 }
 
 func Test_InsecureNewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T) {
+	prevFlyteApiRetryWait := flyteApiRetryWait
+	defer func() {flyteApiRetryWait = prevFlyteApiRetryWait}()
+	flyteApiRetryWait = 0
 	// given the mock flyte-api will first return an error response getting api links...then after retrying will return the expected response
 	apiLinksFailCount := 1
 	handler := func(w http.ResponseWriter, r *http.Request) {
@@ -134,19 +131,11 @@ func Test_InsecureNewClient_ShouldRetryOnErrorGettingFlyteApiLinks(t *testing.T)
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	defer server.Close()
 
-	// and code to record the log message/s
-	logMsg := ""
-	loggerFn := logger.Errorf
-	logger.Errorf = func(msg string, args ...interface{}) { logMsg = fmt.Sprintf(msg, args...) }
-	defer func() { logger.Errorf = loggerFn }()
-
 	baseUrl, _ := url.Parse(server.URL)
 
 	// when
 	client := NewInsecureClient(baseUrl, 10*time.Second)
 
-	// then a log error message will have been recorded...
-	assert.Contains(t, logMsg, "cannot get api links:")
 	// ...but the links are available after the retry
 	healthCheckURL, _ := client.GetFlyteHealthCheckURL()
 	assert.Equal(t, "http://example.com/v1/health", healthCheckURL.String())
@@ -320,7 +309,7 @@ func Test_PostEvent_ShouldPostEvent(t *testing.T) {
 
 	// when
 	want := Event{Name: "Dave", Payload: `{"some":"thing"}`}
-	beforePost := time.Now()
+	beforePost := time.Now().UTC()
 	err := c.PostEvent(want)
 
 	// then
@@ -333,8 +322,8 @@ func Test_PostEvent_ShouldPostEvent(t *testing.T) {
 	want.CreatedAt = got.CreatedAt
 
 	assert.Equal(t, want, got)
-	assert.True(t, time.Now().After(want.CreatedAt))
-	assert.True(t, beforePost.Before(want.CreatedAt))
+	assert.True(t, time.Now().UTC().Sub(want.CreatedAt) >= 0)
+	assert.True(t, beforePost.Sub(want.CreatedAt) <= 0)
 }
 
 func Test_PostEvent_ShouldSendAuthorizationHeader(t *testing.T) {
