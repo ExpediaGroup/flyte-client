@@ -183,7 +183,7 @@ func (c *client) GetFlyteHealthCheckURL() (*url.URL, error) {
 
 // PostEvent posts events to the flyte server
 func (c client) PostEvent(event Event) error {
-	event.CreatedAt = time.Now()
+	event.CreatedAt = time.Now().UTC()
 	if c.eventsURL == nil {
 		return errors.New("eventsURL not initialised - you must post a pack def first")
 	}
@@ -227,6 +227,7 @@ func (c client) TakeAction() (*Action, error) {
 
 // CompleteAction posts the action result to the flyte server.
 func (c client) CompleteAction(action Action, event Event) error {
+	event.CreatedAt = time.Now().UTC()
 	resultURL, err := findURLByRel(action.Links, "actionResult")
 	if err != nil {
 		return err
