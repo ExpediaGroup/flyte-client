@@ -21,7 +21,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ExpediaGroup/flyte-client/client"
+	"github.com/ExpediaGroup/flyte-client/config"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"sync"
 	"testing"
@@ -253,7 +256,9 @@ func Test_ShouldMoveOnToNextAction_IfErrorProcessingAction(t *testing.T) {
 	}
 
 	p := NewPack(packDef, c)
-	p.Start()
+	realPack := p.(pack)
+	realPack.pollingFrequency = 50 * time.Millisecond
+	realPack.Start()
 
 	wg.Wait()
 }
@@ -452,6 +457,60 @@ func Test_HandleAction_ShouldSendFatalEvent_WhenThereIsNoCommandHandler(t *testi
 	if err := waitForChannelOrTimeout(completeChannel, time.Second*1); err != nil {
 		assert.Fail(t, fmt.Sprintf("Should call complete action with %q event", fatalEventName))
 	}
+}
+
+func Test_NewDefaultPack_ShouldCreatePackWithDefaultClient(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"links": []}`))
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	prevGetEnv := config.GetEnv
+	defer func() { config.GetEnv = prevGetEnv }()
+	config.GetEnv = func(name string) string {
+		if name == "FLYTE_API" {
+			return server.URL
+		}
+		return ""
+	}
+
+	p := NewDefaultPack(PackDef{
+		Name:     "JiraPack",
+		Commands: []Command{},
+	})
+
+	assert.IsType(t, pack{}, p)
+	realPack := p.(pack)
+	assert.NotNil(t, realPack.client)
+	assert.Equal(t, 5 * time.Second, realPack.pollingFrequency)
+}
+
+func Test_NewDefaultPackWithPolling_ShouldCreatePackWithDefaultClientAndCustomPolling(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"links": []}`))
+	}
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	prevGetEnv := config.GetEnv
+	defer func() { config.GetEnv = prevGetEnv }()
+	config.GetEnv = func(name string) string {
+		if name == "FLYTE_API" {
+			return server.URL
+		}
+		return ""
+	}
+
+	p := NewPackWithPolling(PackDef{
+		Name:     "JiraPack",
+		Commands: []Command{},
+	}, 1 * time.Second)
+
+	assert.IsType(t, pack{}, p)
+	realPack := p.(pack)
+	assert.NotNil(t, realPack.client)
+	assert.Equal(t, 1 * time.Second, realPack.pollingFrequency)
 }
 
 type createPack func(client.Pack) error

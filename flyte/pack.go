@@ -21,6 +21,7 @@ package flyte
 import (
 	"encoding/json"
 	"github.com/ExpediaGroup/flyte-client/client"
+	"github.com/ExpediaGroup/flyte-client/config"
 	"github.com/ExpediaGroup/flyte-client/healthcheck"
 	"github.com/rs/zerolog/log"
 	"net/url"
@@ -60,6 +61,25 @@ func NewPack(packDef PackDef, client client.Client, healthChecks ...healthcheck.
 		// - if actions are available then the pack/client will consume them as quickly as it can)
 		pollingFrequency: 5 * time.Second,
 		healthChecks:     addDefaultHealthCheckIfNoneExist(healthChecks),
+	}
+}
+
+func NewDefaultPack(packDef PackDef) Pack {
+	cfg := config.FromEnvironment()
+	return NewPack(packDef, client.NewClient(cfg.FlyteApiUrl, cfg.Timeout))
+}
+
+func NewPackWithPolling(packDef PackDef, polling time.Duration) Pack {
+	cfg := config.FromEnvironment()
+	if polling < 500 * time.Millisecond {
+		polling = 500 * time.Millisecond
+		log.Warn().Msgf("Enforcing lower limit of 500 Milliseconds for commands polling frequency")
+	}
+	return pack{
+		PackDef: packDef,
+		client:  client.NewClient(cfg.FlyteApiUrl, cfg.Timeout),
+		pollingFrequency: polling,
+		healthChecks:     addDefaultHealthCheckIfNoneExist([]healthcheck.HealthCheck{}),
 	}
 }
 
