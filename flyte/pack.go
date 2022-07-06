@@ -102,6 +102,7 @@ func (p pack) Start() {
 		p.Start()
 		return
 	}
+	log.Info().Msgf("%s pack is registered and available to take action", p.Name)
 	p.handleCommands()
 	p.startHealthCheckServer()
 }
