@@ -102,7 +102,7 @@ func (p pack) Start() {
 		p.Start()
 		return
 	}
-	log.Info().Msgf("%s pack is registered and available to take action", p.Name)
+	log.Info().Msgf("%s pack has registered with flyte api", p.Name)
 	p.handleCommands()
 	p.startHealthCheckServer()
 }
